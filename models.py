@@ -5,6 +5,26 @@ import tensorflow as tf
 from odeint import odeint
 
 
+class LeakyComponent(tf.keras.layers.Layer):
+  def __init__(self):
+    super(LeakyComponent, self).__init__()
+
+  def build(self, input_shape):
+    w_init = tf.random_normal_initializer()
+    self.tau = tf.Variable(
+        initial_value=1-w_init(shape=(1, input_shape[-1]),
+                            dtype='float32'),
+        trainable=True)
+    self.mult = tf.keras.layers.Multiply()
+    super(LeakyComponent, self).build(input_shape)  # Be sure to call this at the end
+
+  def call(self, x):
+    result = self.mult([x,-1/self.tau])
+    return result
+
+  def compute_output_shape(self, input_shape):
+    return input_shape[0]
+
 class MLP(tf.keras.Sequential):
   """ Simple MLP model. """
   def __init__(self,
@@ -97,12 +117,60 @@ class CTRNN(ODEModel):
                      kernel_initializer=tf.initializers.orthogonal(1))
     output = make_sequential(num_output_layers, **layer_kws)
     
+    super().__init__(state, dynamics, output, time=time, rtol=rtol, atol=atol)
+    
+    self.leakyComponent = LeakyComponent()
+    
+  # implements a leaky integrator
+  def call(self, inputs, training=True, mask=None):
+    _ = training, mask
+
+    def dynamics(inputs, time):
+      time = tf.cast([[time]], tf.float32)
+      inputs_padded = tf.concat([inputs, tf.tile(time, [inputs.shape[0], 1])], -1)
+      return tf.keras.layers.Add()([self.dynamics(inputs_padded),self.leakyComponent(inputs)])  # TODO : implement learnable tau vector
+
+    state = self.state(inputs)
+    hidden = self.odeint(dynamics, state, self.time)[-1]
+    out = self.outputs(hidden)
+    return out
+
+class LTC(ODEModel):
+  """ Basic LTC model using the ode wrapper. """
+  # TODO implement learnable tau vector (as in CT-RNN) --> (-x/tau)
+  # TODO implement conductance based synapse model --> S(t) = f*(A-x(t))
+  
+  def __init__(self, output_units, hidden_units=64,
+               num_state_layers=1, num_dynamics_layers=1, num_output_layers=1,
+               time=(0., 1.), rtol=1e-3, atol=1e-3, tau = 0.9):
+
+    raise Exception("LTC not implemented yed")
+
+    def make_sequential(num_layers, **layer_kws):
+      return tf.keras.Sequential(
+          [tf.keras.layers.Dense(**layer_kws) for _ in range(num_layers)]) 
+
+    layer_kws = dict(
+        units=hidden_units,
+        activation=tf.nn.tanh,
+        kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
+        bias_initializer=tf.initializers.zeros())
+
+    state = make_sequential(num_state_layers, **layer_kws)
+    dynamics = make_sequential(num_dynamics_layers, **layer_kws)
+
+    layer_kws.update(units=output_units, activation=None,
+                     kernel_initializer=tf.initializers.orthogonal(1))
+    output = make_sequential(num_output_layers, **layer_kws)
+    
     self.tau = tau
     
     super().__init__(state, dynamics, output, time=time, rtol=rtol, atol=atol)
     
   # implements a leaky integrator
   def call(self, inputs, training=True, mask=None):
+    raise Exception("LTC not implemented yed")
+  
     _ = training, mask
 
     def dynamics(inputs, time):

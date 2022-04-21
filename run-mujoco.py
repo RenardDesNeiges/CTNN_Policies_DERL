@@ -3,7 +3,7 @@
 from functools import partial
 import tensorflow as tf
 import derl
-from models import ContinuousActorCriticModel, ODEMLP, MLP, CTRNN
+from models import ContinuousActorCriticModel, ODEMLP, MLP, CTRNN, LTC
 tf.enable_eager_execution()
 
 ACCEPTED_MODELS = ['mlp','node','ctrnn','ltc']
@@ -36,6 +36,11 @@ def make_mlp_class(model_arg, args):
                     num_output_layers=args.num_dynamics_layers,
                     rtol=args.tol, atol=args.tol)
   elif model_arg == 'ltc':
+    return partial(LTC, hidden_units=args.hidden_units,
+                    num_state_layers=args.num_state_layers,
+                    num_dynamics_layers=args.num_dynamics_layers,
+                    num_output_layers=args.num_dynamics_layers,
+                    rtol=args.tol, atol=args.tol)
     raise Exception("LTC network not implemented")
   return partial(MLP, hidden_units=args.hidden_units,
                  num_layers=(args.num_state_layers
