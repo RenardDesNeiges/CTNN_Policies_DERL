@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: derl
+Version: 0.1.dev0
+Summary: Deep Reinforcement Learning package
+Home-page: https://github.com/MichaelKonobeev/derl/
+Author: Mikhail Konobeev
+Author-email: konobeev.michael@gmail.com
+License: MIT
+Platform: UNKNOWN
+License-File: LICENSE
+
+DERL is a Deep Reinforcement Learning package
+
