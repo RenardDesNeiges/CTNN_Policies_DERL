@@ -10,8 +10,8 @@ tf.enable_eager_execution()
 ACCEPTED_MODELS = ['mlp','node','ctrnn','ltc']
 
 
-INT_ARGS = ["seed", "hidden_units", "num_state_layers", "num_dynamics_layers", "num_output_layers"]
-FLOAT_ARGS = ["tol"]
+INT_ARGS = ["seed", "hidden_units", "num_state_layers", "num_dynamics_layers", "num_output_layers","log_period","nenvs","num_epochs","num_minibatches","num_runner_steps"]
+FLOAT_ARGS = ["tol","cliprange","entropy_coef","gamma","lambda_","lr","max_grad_norm","num_train_steps","optimizer_epsilon","value_loss_coef"]
 BOOL_ARGS = ["save_weights"]
 
 def _parser():
@@ -67,12 +67,15 @@ def parse_arg_archive(args_path):
   
   for el in [a.replace('\n','').split(': ') for a in args_array]:
     run_args[el[0]] = el[1]
-    if el[0] in INT_ARGS:
-      run_args[el[0]] = int(el[1])
-    if el[0] in FLOAT_ARGS:
-      run_args[el[0]] = float(el[1])
-    if el[0] in BOOL_ARGS:
-      run_args[el[0]] = bool(el[1])
+    if el[1] == "None":
+      run_args[el[0]] = None
+    else:
+      if el[0] in INT_ARGS:
+        run_args[el[0]] = int(el[1])
+      if el[0] in FLOAT_ARGS:
+        run_args[el[0]] = float(el[1])
+      if el[0] in BOOL_ARGS:
+        run_args[el[0]] = bool(el[1])
   run_args = SimpleNamespace(**run_args)
   return run_args
 
@@ -92,8 +95,8 @@ def main():
                                      env.action_space.shape[0],
                                      policy, value)
 
-  learner = derl.PPOLearner.from_env_args(env, run_args, model=model)
-  learner.learn(args.num_train_steps, args.logdir, run_args.log_period)
+  runner = derl.PPOLearner.make_runner(env,run_args,model=model)
+  # TODO : use the runner env to generate (and render one or more trajectory)
 
 
 if __name__ == "__main__":

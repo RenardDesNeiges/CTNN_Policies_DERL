@@ -73,6 +73,7 @@ class EnvRunner(BaseRunner):
     return trajectory
 
 
+# TODO : modifiy this to get an eval runnera
 class TrajectorySampler(BaseRunner):
   """ Samples parts of trajectory for specified number of epochs. """
   # pylint: disable=too-many-instance-attributes
