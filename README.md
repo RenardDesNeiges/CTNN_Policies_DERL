@@ -53,14 +53,17 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
 
 ## Todo-list
 
+**Done**
 * Implement a CT-RNN model
+
+**Todo**
 * Implement a Liquid Time-Constant Neural network model
-* Implement the Pybullet environment in place of Mujoco
+* Implement the PyBullet environment in place of Mujoco
 * Implement evaluation code of pre-trained policies
 * Write visualization code to output 
   * videos of the experiments
   * internal state evolution of the RNNs
-  * plot network topolofy
+  * plot network topology
 * Run experiments on 
   * NODE/CT-RNN/LTC convergence
   * NODE/CT-RNN/LTC robustness
