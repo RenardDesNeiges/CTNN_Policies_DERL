@@ -73,6 +73,48 @@ class ODEMLP(ODEModel):
     output = make_sequential(num_output_layers, **layer_kws)
     super().__init__(state, dynamics, output, time=time, rtol=rtol, atol=atol)
 
+class CTRNN(ODEModel):
+  """ Basic CT-RNN model using the ode wrapper. """
+  # pylint: disable=too-many-arguments
+  def __init__(self, output_units, hidden_units=64,
+               num_state_layers=1, num_dynamics_layers=1, num_output_layers=1,
+               time=(0., 1.), rtol=1e-3, atol=1e-3, tau = 0.9):
+
+    def make_sequential(num_layers, **layer_kws):
+      return tf.keras.Sequential(
+          [tf.keras.layers.Dense(**layer_kws) for _ in range(num_layers)])
+
+    layer_kws = dict(
+        units=hidden_units,
+        activation=tf.nn.tanh,
+        kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
+        bias_initializer=tf.initializers.zeros())
+
+    state = make_sequential(num_state_layers, **layer_kws)
+    dynamics = make_sequential(num_dynamics_layers, **layer_kws)
+
+    layer_kws.update(units=output_units, activation=None,
+                     kernel_initializer=tf.initializers.orthogonal(1))
+    output = make_sequential(num_output_layers, **layer_kws)
+    
+    self.tau = tau
+    
+    super().__init__(state, dynamics, output, time=time, rtol=rtol, atol=atol)
+    
+  # implements a leaky integrator
+  def call(self, inputs, training=True, mask=None):
+    _ = training, mask
+
+    def dynamics(inputs, time):
+      time = tf.cast([[time]], tf.float32)
+      inputs_padded = tf.concat([inputs, tf.tile(time, [inputs.shape[0], 1])], -1)
+      return tf.keras.layers.Add()([self.dynamics(inputs_padded),(-1/self.tau)*inputs]) 
+
+    state = self.state(inputs)
+    hidden = self.odeint(dynamics, state, self.time)[-1]
+    out = self.outputs(hidden)
+    return out
+
 
 class ContinuousActorCriticModel(tf.keras.Model):
   """ Adds variance variable to policy and value models to create new model. """

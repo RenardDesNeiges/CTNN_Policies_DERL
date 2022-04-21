@@ -51,6 +51,21 @@ Additionally, to watch the task queue you may run
 watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
 ``` -->
 
+## Todo-list
+
+* Implement a CT-RNN model
+* Implement a Liquid Time-Constant Neural network model
+* Implement the Pybullet environment in place of Mujoco
+* Implement evaluation code of pre-trained policies
+* Write visualization code to output 
+  * videos of the experiments
+  * internal state evolution of the RNNs
+  * plot network topolofy
+* Run experiments on 
+  * NODE/CT-RNN/LTC convergence
+  * NODE/CT-RNN/LTC robustness
+  * impact of network topology
+
 ## Credits
 
 Mikhail Konobeev's repository from which this repo was forked:
@@ -64,3 +79,5 @@ Mikhail Konobeev's repository from which this repo was forked:
   howpublished={\url{https://github.com/MichaelKonobeev/neuralode-rl}},
 }
 ```
+
+Mujoco (https://mujoco.org) and Mujoco-py (https://github.com/openai/mujoco-py) from OpenAI.

@@ -6,6 +6,7 @@ import re
 
 
 #TODO : remove the roboschool envs (no experiments to be run in roboschool)
+
 def get_envs(env_type="mujoco"):
   """ Returns list of default envs. """
   return {
