@@ -55,12 +55,11 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
 
 **Done**
 * Implement a CT-RNN model
-* Implement a Liquid Time-Constant Neural network model
 
 **Todo**
-* Implement saving of pre-trained policies
-* Implement evaluation code of pre-trained policies
+* Implement a Liquid Time-Constant Neural network model
 * Implement the PyBullet environment in place of Mujoco
+* Implement evaluation code of pre-trained policies
 * Write visualization code to output 
   * videos of the experiments
   * internal state evolution of the RNNs

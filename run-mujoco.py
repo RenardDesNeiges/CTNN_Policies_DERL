@@ -17,7 +17,6 @@ def get_parser(base_parser):
   base_parser.add_argument("--num-output-layers", type=int, default=1)
   base_parser.add_argument("--policy-net", type=str, default="mlp")
   base_parser.add_argument("--value-net", type=str, default="mlp")
-  base_parser.add_argument("--save_weights", type=bool, default=True)
   base_parser.add_argument("--tol", type=float, default=1e-3)
   return base_parser
 
@@ -42,11 +41,11 @@ def make_mlp_class(model_arg, args):
                     num_dynamics_layers=args.num_dynamics_layers,
                     num_output_layers=args.num_dynamics_layers,
                     rtol=args.tol, atol=args.tol)
-  else:
-    return partial(MLP, hidden_units=args.hidden_units,
-                    num_layers=(args.num_state_layers
-                      + args.num_dynamics_layers
-                      + args.num_output_layers))
+    raise Exception("LTC network not implemented")
+  return partial(MLP, hidden_units=args.hidden_units,
+                 num_layers=(args.num_state_layers
+                             + args.num_dynamics_layers
+                             + args.num_output_layers))
 
 
 def main():
