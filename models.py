@@ -90,7 +90,6 @@ class ODEModel(tf.keras.Model):
 
 class ODEMLP(ODEModel):
   """ Basic MLP model with ode. """
-  # pylint: disable=too-many-arguments
   def __init__(self, output_units, hidden_units=64,
                num_state_layers=1, num_dynamics_layers=1, num_output_layers=1,
                time=(0., 1.), rtol=1e-3, atol=1e-3):
@@ -156,8 +155,6 @@ class CTRNN(ODEModel):
 
 class LTC(ODEModel):
   """ Basic LTC model using the ode wrapper. """
-  # TODO implement learnable tau vector (as in CT-RNN) --> (-x/tau)
-  # TODO implement conductance based synapse model --> S(t) = f*(A-x(t))
   
   def __init__(self, output_units, hidden_units=64,
                num_state_layers=1, num_dynamics_layers=1, num_output_layers=1,

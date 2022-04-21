@@ -1,5 +1,4 @@
 """ Script to run muojco experiment on a single env. """
-# pylint: disable=invalid-name
 from functools import partial
 import tensorflow as tf
 import derl
