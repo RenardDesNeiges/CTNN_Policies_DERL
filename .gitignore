@@ -2,3 +2,5 @@
 .vscode/settings.json
 logdir/*
 __pycache__/*
+.DS_Store
+*.pyc

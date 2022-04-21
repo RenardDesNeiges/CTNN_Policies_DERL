@@ -95,10 +95,12 @@ class Learner:
     return self.alg.model
 
   @classmethod
-  def from_env_args(cls, env, args, model=None):
+  def from_env_args(cls, env, args, model=None, save_weights=True):
     """ Creates a learner instance from environment and args namespace. """
     runner = cls.make_runner(env, args, model=model)
-    return cls(runner, cls.make_alg(runner, args))
+    learner = cls(runner, cls.make_alg(runner, args))
+    learner.save_weights = save_weights
+    return learner
 
   def learning_body(self):
     """ Learning loop body. """
