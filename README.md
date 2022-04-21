@@ -1,49 +1,34 @@
 # Application of Neural Ordinary Differential Equations for Continuous Control Reinforcement Learning
 
-This repository contains implementation of the adjoint method for
-backpropagating through ODE solvers on top of Eager TensorFlow and
-experiments with models containing ODE layers in MuJoCo and Roboschool
-environments with policies training using PPO.
+This repository contains experiments run in the context of the semester project I worked on at EPFL while under the supervision of Dr. Guillaume Bellegarda, Pr. Auke Ijspeert (both from EPFL's biorobotics laboratory) and Pr. Wulfram Gerstner (from EPFL's Laboratory of Computational Neurosciences). The goal is to train time-continuous neural networks (more specifically LTCs) for strongly non-linear control tasks (ideally locomotion of quadruped robots) using reinforcement learning. The original code base implementing the adjoint sensitivity method and the training environment from which I forked this repo as well as the DERL package was written by Mikhail Konobeev (https://github.com/MichaelKonobeev).
 
 
 ## Install and Run
 
-Firstly, install TensorFlow version 1.13.1. Note that GPU version
+Firstly, work in a Python 3.7 environment and install TensorFlow version 1.13.1. Note that GPU version
 may not be necessary as the models are quite simple and could run
 fast on a powerful CPU. Cloning the repo and installing
 the requirements:
 ```{bash}
-git clone --recursive https://github.com/MichaelKonobeev/neuralode-rl.git
+git clone --recursive https://github.com/RenardDesNeiges/CTNN_Policies_DERL
 cd neuralode-rl
 pip install -r requirements.txt
 ```
 You will need to install environment dependencies for
-[MuJoCo](https://github.com/openai/mujoco-py) and/or
-[Roboschool](https://github.com/openai/roboschool) envs separately.
-For roboschool, use version 1.0.48 which is the latest version compatible
-with gym:
-```{bash}
-pip install roboschool==1.0.48
-```
+[MuJoCo](https://github.com/openai/mujoco-py)
 
 To run baseline MLP-model experiment on a single env:
 ```{bash}
 python run-mujoco.py --env-id HalfCheetah-v3 --logdir logdir/mlp/half-cheetah.00
-# OR
-python run-roboschool.py --env-id RoboschoolHumanoidFlagrun-v1 \
-     --logdir logdir/mlp/roboschool-humanoid-flagrun.00
 ```
 To run experiments with models containing ode-layers for both
 policy and value function:
 ```{bash}
 python run-mujoco.py --env-id HalfCheetah-v3 \
     --logdir logdir/ode/half-cheetah.00 --ode-policy --ode-value
-# OR
-python run-roboschool.py --env-id RoboschoolHumanoidFlagrun-v1 \
-    --logdir logdir/ode/roboschool-humanoid-flagrun.00
 ```
 
-You can also schedule all of the experiments using `task-spooler`
+<!-- You can also schedule all of the experiments using `task-spooler`
 which could be install on Ubuntu with `sudo apt-get install task-spooler`.
 After that launching `run.py` should work:
 ```{bash}
@@ -64,30 +49,11 @@ tsp -S 5
 Additionally, to watch the task queue you may run
 ```{bash}
 watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
-```
+``` -->
 
-## Results
+## Credits
 
-### MuJoCo
-![mujoco](assets/mujoco.png)
-
-### Roboschool
-![roboschool](assets/roboschool.png)
-
-The plots show average reward over last 100 episodes during training.
-For MuJoCo envs the error bars represent standard deviation from
-the mean shown by a bold line. For Roboschool experiments each
-line of the same color corresponds to a run with a different seed.
-
-## References
-* [torchdiffeq](https://github.com/rtqichen/torchdiffeq): author's implementation of the adjoint method and their experiments
-with neural ODES
-* [neural-ode](https://github.com/saparina/neural-ode): implementation of the adjoint method on top of Eager TensorFlow
-and experiments with neural ODEs for image and text sentiment classification.
-
-## Citation
-
-Please cite this repository if it was useful for your research
+Mikhail Konobeev's repository from which this repo was forked:
 ```
 @misc{konobeev2018,
   author={Mikhail Konobeev},

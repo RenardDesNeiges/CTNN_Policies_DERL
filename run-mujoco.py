@@ -35,7 +35,7 @@ def make_mlp_class(use_ode, args):
 
 
 def main():
-  """ Eneterance point. """
+  """ Entrance point. """
   parser = get_parser(derl.get_parser(derl.PPOLearner.get_defaults("mujoco")))
   args = derl.log_args(parser.parse_args())
 
