@@ -147,7 +147,7 @@ class CTRNN(ODEModel):
     def dynamics(inputs, time):
       time = tf.cast([[time]], tf.float32)
       inputs_padded = tf.concat([inputs, tf.tile(time, [inputs.shape[0], 1])], -1)
-      return tf.keras.layers.Add()([self.dynamics(inputs_padded),self.leakyComponent(inputs)])  # TODO : implement learnable tau vector
+      return tf.keras.layers.Add()([self.dynamics(inputs_padded),self.leakyComponent(inputs)])  
 
     state = self.state(inputs)
     hidden = self.odeint(dynamics, state, self.time)[-1]
@@ -156,8 +156,6 @@ class CTRNN(ODEModel):
 
 class LTC(ODEModel):
   """ Basic LTC model using the ode wrapper. """
-  # TODO implement learnable tau vector (as in CT-RNN) --> (-x/tau)
-  # TODO implement conductance based synapse model --> S(t) = f*(A-x(t))
   
   def __init__(self, output_units, hidden_units=64,
                num_state_layers=1, num_dynamics_layers=1, num_output_layers=1,
