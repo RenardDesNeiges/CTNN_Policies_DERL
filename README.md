@@ -84,4 +84,7 @@ Mikhail Konobeev's repository from which this repo was forked:
 }
 ```
 
+Mikhail Konobeev's DERL library (https://github.com/MichaelKonobeev/derl)  which I modified starting from the @6fcd44 verison accessible there (https://github.com/MichaelKonobeev/derl/tree/06fcd447ab7ca5d595f29968938f58ad8cd90bee).
+
+
 Mujoco (https://mujoco.org) and Mujoco-py (https://github.com/openai/mujoco-py) from OpenAI.
