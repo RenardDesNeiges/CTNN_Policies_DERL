@@ -1,7 +1,7 @@
 """ All derl imports. """
 from . import train, env
 from .base import BaseRunner, BaseAlgorithm, Learner
-from .runners import EnvRunner, TrajectorySampler, make_ppo_runner
+from .runners import EnvRunner, EvalRunner, TrajectorySampler, make_ppo_runner
 from .trajectory_transforms import (
     GAE,
     MergeTimeBatch,

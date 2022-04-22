@@ -73,7 +73,6 @@ class EnvRunner(BaseRunner):
     return trajectory
 
 
-# TODO : modifiy this to get an eval runnera
 class TrajectorySampler(BaseRunner):
   """ Samples parts of trajectory for specified number of epochs. """
   # pylint: disable=too-many-instance-attributes
@@ -138,3 +137,60 @@ def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
                              num_minibatches=num_minibatches,
                              transforms=[NormalizeAdvantages()])
   return runner
+
+class EvalRunner(EnvRunner):
+  
+  def __init__(self, env, policy, nsteps, render=True):
+    super().__init__(env, policy, nsteps, cutoff=None,
+               asarray=True, transforms=None, step_var=None)
+    self.render = render
+    
+  def get_next(self):
+    """ Runs the agent in the environment.  """
+    trajectory = defaultdict(list, {"actions": []})
+    observations = []
+    rewards = []
+    resets = []
+    self.state["env_steps"] = self.nsteps
+    if self.policy.is_recurrent():
+      self.state["policy_state"] = self.policy.get_state()
+    if self.render:
+      self.env.render()
+    for i in range(self.nsteps):
+      observations.append(self.state["latest_observation"])
+      act = self.policy.act(self.state["latest_observation"])
+      if "actions" not in act:
+        raise ValueError("result of policy.act must contain 'actions' "
+                          f"but has keys {list(act.keys())}")
+      for key, val in act.items():
+        trajectory[key].append(val)
+
+      obs, rew, done, _ = self.env.step(trajectory["actions"][-1])
+      if self.render:
+        self.env.render()
+      self.state["latest_observation"] = obs
+      rewards.append(rew)
+      resets.append(done)
+      self.step_var.assign_add(self.nenvs or 1)
+
+      # Only reset if the env is not batched. Batched envs should auto-reset.
+      if not self.nenvs and np.all(done):
+        self.state["env_steps"] = i + 1
+        self.state["latest_observation"] = self.env.reset()
+        if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
+          break
+
+    self.env.reset()
+    self.env.close()
+
+    trajectory.update(observations=observations, rewards=rewards, resets=resets)
+    if self.asarray:
+      for key, val in trajectory.items():
+        try:
+          trajectory[key] = np.asarray(val)
+        except ValueError:
+          raise ValueError(
+              f"cannot convert value under key '{key}' to np.ndarray")
+    trajectory["state"] = self.state
+
+    return trajectory

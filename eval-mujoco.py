@@ -4,7 +4,9 @@ from types import SimpleNamespace
 from functools import partial
 import tensorflow as tf
 import derl
+from derl import EvalRunner, ActorCriticPolicy
 from models import ContinuousActorCriticModel, ODEMLP, MLP, CTRNN, LTC
+
 tf.enable_eager_execution()
 
 ACCEPTED_MODELS = ['mlp','node','ctrnn','ltc']
@@ -18,6 +20,8 @@ def _parser():
   """ Parse the input arguments """
   parser = argparse.ArgumentParser()
   parser.add_argument("--logdir", type=str, default=None, required=True)
+  parser.add_argument("--eval-step", type=int, default=256, required=False)
+  parser.add_argument("--render", type=bool, default=False, required=False)
   return parser
 
   
@@ -53,7 +57,7 @@ def parse_arg_archive(args_path):
     args_array = f.readlines()
     
   run_args = dict()
-  # setting defaults
+  # setting defaultsx 
   run_args["seed"] = 0
   run_args["hidden_units"] = 64
   run_args["num_state_layers"] = 1
@@ -94,9 +98,10 @@ def main():
   model = ContinuousActorCriticModel(env.observation_space.shape,
                                      env.action_space.shape[0],
                                      policy, value)
-
-  runner = derl.PPOLearner.make_runner(env,run_args,model=model)
-  # TODO : use the runner env to generate (and render one or more trajectory)
+  model.load_weights(args.logdir+'/model') # load the weights from the logged policy
+  network = ActorCriticPolicy(model)
+  runner = EvalRunner(env, network, args.eval_step, args.render)
+  runner.get_next()
 
 
 if __name__ == "__main__":
