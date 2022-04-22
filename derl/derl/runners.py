@@ -140,23 +140,29 @@ def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
 
 class EvalRunner(EnvRunner):
   
-  def __init__(self, env, policy, nsteps, render=True):
+  def __init__(self, env, policy, nsteps, render=False):
     super().__init__(env, policy, nsteps, cutoff=None,
                asarray=True, transforms=None, step_var=None)
     self.render = render
     
-  def get_next(self):
+  def get_next(self, n_steps = None):
     """ Runs the agent in the environment.  """
     trajectory = defaultdict(list, {"actions": []})
     observations = []
     rewards = []
+    policy_states = []
     resets = []
-    self.state["env_steps"] = self.nsteps
+
+    if n_steps is None:
+      n_steps = self.nsteps
+    self.state["env_steps"] = n_steps       
+    
     if self.policy.is_recurrent():
       self.state["policy_state"] = self.policy.get_state()
     if self.render:
       self.env.render()
-    for i in range(self.nsteps):
+      
+    for i in range(n_steps):
       observations.append(self.state["latest_observation"])
       act = self.policy.act(self.state["latest_observation"])
       if "actions" not in act:
@@ -166,11 +172,14 @@ class EvalRunner(EnvRunner):
         trajectory[key].append(val)
 
       obs, rew, done, _ = self.env.step(trajectory["actions"][-1])
+      
       if self.render:
         self.env.render()
+      
       self.state["latest_observation"] = obs
       rewards.append(rew)
       resets.append(done)
+      policy_states.append(self.policy.get_state())
       self.step_var.assign_add(self.nenvs or 1)
 
       # Only reset if the env is not batched. Batched envs should auto-reset.
@@ -183,7 +192,8 @@ class EvalRunner(EnvRunner):
     self.env.reset()
     self.env.close()
 
-    trajectory.update(observations=observations, rewards=rewards, resets=resets)
+    trajectory.update(observations=observations, rewards=rewards, 
+                      resets=resets, policy_states=policy_states)
     if self.asarray:
       for key, val in trajectory.items():
         try:

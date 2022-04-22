@@ -62,11 +62,16 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
   * rendering of the experiments
 
 **Todo**
+* Recurrent Policies
+  * Stateful models
+  * Env support
+  * PPO support
 * Write visualization code to output 
   * videos of the experiments
   * internal state evolution of the RNNs
   * plot network topology
 * Run experiments on 
+  * more complex gym environments
   * NODE/CT-RNN/LTC convergence
   * NODE/CT-RNN/LTC robustness
   * impact of network topology

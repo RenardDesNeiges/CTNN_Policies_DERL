@@ -101,8 +101,7 @@ def main():
   model.load_weights(args.logdir+'/model') # load the weights from the logged policy
   network = ActorCriticPolicy(model)
   runner = EvalRunner(env, network, args.eval_step, args.render)
-  runner.get_next()
-
+  trajectory = runner.get_next()
 
 if __name__ == "__main__":
   main()

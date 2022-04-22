@@ -104,7 +104,7 @@ class ODEMLP(ODEModel):
         kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
         bias_initializer=tf.initializers.zeros())
 
-    state = make_sequential(num_state_layers, **layer_kws)
+    state = make_sequential(num_state_layers, **layer_kws) # TODO : implement recurrent policy
     dynamics = make_sequential(num_dynamics_layers, **layer_kws)
 
     layer_kws.update(units=output_units, activation=None,
@@ -128,7 +128,7 @@ class CTRNN(ODEModel):
         kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
         bias_initializer=tf.initializers.zeros())
 
-    state = make_sequential(num_state_layers, **layer_kws)
+    state = make_sequential(num_state_layers, **layer_kws) # TODO : implement recurrent policy
     dynamics = make_sequential(num_dynamics_layers, **layer_kws)
 
     layer_kws.update(units=output_units, activation=None,
@@ -171,7 +171,7 @@ class LTC(ODEModel):
         kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
         bias_initializer=tf.initializers.zeros())
 
-    state = make_sequential(num_state_layers, **layer_kws)
+    state = make_sequential(num_state_layers, **layer_kws) # TODO : implement recurrent policy
     dynamics = make_sequential(num_dynamics_layers, **layer_kws)
 
     layer_kws.update(units=output_units, activation=None,
