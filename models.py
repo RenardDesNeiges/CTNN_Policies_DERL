@@ -65,34 +65,46 @@ class MLP(tf.keras.Sequential):
 
 class ODEModel(tf.keras.Model):
   """ ODE model that wraps state, dynamics and output models. """
-  def __init__(self, state, dynamics, outputs,
-               time=(0., 1.), rtol=1e-3, atol=1e-3):
+  #TODO: implement recurrent policies
+  def __init__(self, input_net, dynamics, outputs,
+               time=(0., 1.), rtol=1e-3, atol=1e-3, is_recurrent=False):
     super().__init__()
-    self.state = state
+    self.input_net = input_net
     self.dynamics = dynamics
     self.outputs = outputs
     self.time = tf.cast(tf.convert_to_tensor(time), tf.float32)
     self.odeint = partial(odeint, rtol=rtol, atol=atol)
+    self.is_recurrent = is_recurrent
+    
+  
 
-  def call(self, inputs, training=True, mask=None):
+  def call(self, inputs, training=True, mask=None, prev_hidden=None):
     _ = training, mask
+
+    if prev_hidden is None and self.is_recurrent:
+      raise Exception('Model is recurrent but no hidden state was provided')
 
     def dynamics(inputs, time):
       time = tf.cast([[time]], tf.float32)
       inputs = tf.concat([inputs, tf.tile(time, [inputs.shape[0], 1])], -1)
       return self.dynamics(inputs)
-
-    state = self.state(inputs)
-    hidden = self.odeint(dynamics, state, self.time)[-1]
+    latent_input = tf.keras.layers.Add()([self.input_net(inputs),prev_hidden])  \
+            if self.is_recurrent == True else self.input_net(inputs)
+            
+    hidden = self.odeint(dynamics, latent_input, self.time)[-1]
     out = self.outputs(hidden)
-    return out
+    
+    if self.is_recurrent:
+      return out, hidden 
+    else:
+      return out
 
 
 class ODEMLP(ODEModel):
   """ Basic MLP model with ode. """
   def __init__(self, output_units, hidden_units=64,
-               num_state_layers=1, num_dynamics_layers=1, num_output_layers=1,
-               time=(0., 1.), rtol=1e-3, atol=1e-3):
+               num_input_layers=1, num_dynamics_layers=1, num_output_layers=1,
+               time=(0., 1.), rtol=1e-3, atol=1e-3, is_recurrent=False):
 
     def make_sequential(num_layers, **layer_kws):
       return tf.keras.Sequential(
@@ -104,18 +116,22 @@ class ODEMLP(ODEModel):
         kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
         bias_initializer=tf.initializers.zeros())
 
-    state = make_sequential(num_state_layers, **layer_kws) # TODO : implement recurrent policy
+    input_net = make_sequential(num_input_layers, **layer_kws) # TODO : implement recurrent policy
     dynamics = make_sequential(num_dynamics_layers, **layer_kws)
 
     layer_kws.update(units=output_units, activation=None,
                      kernel_initializer=tf.initializers.orthogonal(1))
     output = make_sequential(num_output_layers, **layer_kws)
-    super().__init__(state, dynamics, output, time=time, rtol=rtol, atol=atol)
+    
+    self.hidden_units = hidden_units
+    
+    super().__init__(input_net, dynamics, output, time=time, rtol=rtol, atol=atol, is_recurrent=is_recurrent)
 
 class CTRNN(ODEModel):
+  #TODO recurrent support
   """ Basic CT-RNN model using the ode wrapper. """
   def __init__(self, output_units, hidden_units=64,
-               num_state_layers=1, num_dynamics_layers=1, num_output_layers=1,
+               num_input_layers=1, num_dynamics_layers=1, num_output_layers=1,
                time=(0., 1.), rtol=1e-3, atol=1e-3, tau = 0.9):
 
     def make_sequential(num_layers, **layer_kws):
@@ -128,14 +144,14 @@ class CTRNN(ODEModel):
         kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
         bias_initializer=tf.initializers.zeros())
 
-    state = make_sequential(num_state_layers, **layer_kws) # TODO : implement recurrent policy
+    input_net = make_sequential(num_input_layers, **layer_kws) # TODO : implement recurrent policy
     dynamics = make_sequential(num_dynamics_layers, **layer_kws)
 
     layer_kws.update(units=output_units, activation=None,
                      kernel_initializer=tf.initializers.orthogonal(1))
     output = make_sequential(num_output_layers, **layer_kws)
     
-    super().__init__(state, dynamics, output, time=time, rtol=rtol, atol=atol)
+    super().__init__(input_net, dynamics, output, time=time, rtol=rtol, atol=atol)
     
     self.leakyComponent = LeakyComponent()
     
@@ -146,18 +162,19 @@ class CTRNN(ODEModel):
     def dynamics(inputs, time):
       time = tf.cast([[time]], tf.float32)
       inputs_padded = tf.concat([inputs, tf.tile(time, [inputs.shape[0], 1])], -1)
-      return tf.keras.layers.Add()([self.dynamics(inputs_padded),self.leakyComponent(inputs)])  # TODO : implement learnable tau vector
+      return tf.keras.layers.Add()([self.dynamics(inputs_padded),self.leakyComponent(inputs)]) 
 
-    state = self.state(inputs)
-    hidden = self.odeint(dynamics, state, self.time)[-1]
+    latent_input = self.input_net(inputs)
+    hidden = self.odeint(dynamics, latent_input, self.time)[-1]
     out = self.outputs(hidden)
     return out
 
 class LTC(ODEModel):
+  #TODO recurrent support
   """ Basic LTC model using the ode wrapper. """
   
   def __init__(self, output_units, hidden_units=64,
-               num_state_layers=1, num_dynamics_layers=1, num_output_layers=1,
+               num_input_layers=1, num_dynamics_layers=1, num_output_layers=1,
                time=(0., 1.), rtol=1e-3, atol=1e-3, tau = 0.9):
 
 
@@ -171,14 +188,14 @@ class LTC(ODEModel):
         kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
         bias_initializer=tf.initializers.zeros())
 
-    state = make_sequential(num_state_layers, **layer_kws) # TODO : implement recurrent policy
+    input_net = make_sequential(num_input_layers, **layer_kws) # TODO : implement recurrent policy
     dynamics = make_sequential(num_dynamics_layers, **layer_kws)
 
     layer_kws.update(units=output_units, activation=None,
                      kernel_initializer=tf.initializers.orthogonal(1))
     output = make_sequential(num_output_layers, **layer_kws)
     
-    super().__init__(state, dynamics, output, time=time, rtol=rtol, atol=atol)
+    super().__init__(input_net, dynamics, output, time=time, rtol=rtol, atol=atol)
     
     self.add = tf.keras.layers.Add()
     self.mult = tf.keras.layers.Multiply()
@@ -196,13 +213,14 @@ class LTC(ODEModel):
       non_linearity = self.mult([non_linearity,self.conductance(inputs)])
       return self.add([non_linearity,self.leakyComponent(inputs)])
 
-    state = self.state(inputs)
-    hidden = self.odeint(dynamics, state, self.time)[-1]
+    latent_input = self.input_net(inputs)
+    hidden = self.odeint(dynamics, latent_input, self.time)[-1]
     out = self.outputs(hidden)
     return out
 
 
 class ContinuousActorCriticModel(tf.keras.Model):
+  #TODO recurrent support
   """ Adds variance variable to policy and value models to create new model. """
   def __init__(self, input_shape, action_dim, policy, value, logstd=None):
     super().__init__()
@@ -222,8 +240,15 @@ class ContinuousActorCriticModel(tf.keras.Model):
   def input(self):
     return self.input_tensor
 
-  def call(self, inputs, training=True, mask=None):
+  def call(self, inputs, training=True, mask=None,prev_hidden_pol=None, prev_hidden_val=None):
+    # TODO : recurrent support
     _ = training, mask
+    
+    if self.policy.is_recurrent and prev_hidden_pol is None:
+      raise Exception('No previous state provided to ContinuousActorCriticModel recurrent policy network')
+    if self.value.is_recurrent and prev_hidden_val is None:
+      raise Exception('No previous state provided to ContinuousActorCriticModel recurrent value network')
+    
     inputs = tf.cast(inputs, tf.float32)
     batch_size = tf.shape(inputs)[0]
     logstd = tf.tile(self.logstd[None], [batch_size, 1])

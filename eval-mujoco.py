@@ -1,5 +1,7 @@
 """ Script to eval muojco experiment on a single env (from pre-trained weights). """
 import argparse
+import matplotlib.pyplot as plt
+import numpy as np
 from types import SimpleNamespace
 from functools import partial
 import tensorflow as tf
@@ -12,7 +14,7 @@ tf.enable_eager_execution()
 ACCEPTED_MODELS = ['mlp','node','ctrnn','ltc']
 
 
-INT_ARGS = ["seed", "hidden_units", "num_state_layers", "num_dynamics_layers", "num_output_layers","log_period","nenvs","num_epochs","num_minibatches","num_runner_steps"]
+INT_ARGS = ["seed", "hidden_units", "num_input_layers", "num_dynamics_layers", "num_output_layers","log_period","nenvs","num_epochs","num_minibatches","num_runner_steps"]
 FLOAT_ARGS = ["tol","cliprange","entropy_coef","gamma","lambda_","lr","max_grad_norm","num_train_steps","optimizer_epsilon","value_loss_coef"]
 BOOL_ARGS = ["save_weights"]
 
@@ -31,24 +33,24 @@ def make_mlp_class(model_arg, args):
   """ Returns (partial) MLP class with args from args set. """
   if model_arg == 'node':
     return partial(ODEMLP, hidden_units=args.hidden_units,
-                   num_state_layers=args.num_state_layers,
+                   num_input_layers=args.num_input_layers,
                    num_dynamics_layers=args.num_dynamics_layers,
                    num_output_layers=args.num_dynamics_layers,
                    rtol=args.tol, atol=args.tol)
   elif model_arg == 'ctrnn':
     return partial(CTRNN, hidden_units=args.hidden_units,
-                    num_state_layers=args.num_state_layers,
+                    num_input_layers=args.num_input_layers,
                     num_dynamics_layers=args.num_dynamics_layers,
                     num_output_layers=args.num_dynamics_layers,
                     rtol=args.tol, atol=args.tol)
   elif model_arg == 'ltc':
     return partial(LTC, hidden_units=args.hidden_units,
-                    num_state_layers=args.num_state_layers,
+                    num_input_layers=args.num_input_layers,
                     num_dynamics_layers=args.num_dynamics_layers,
                     num_output_layers=args.num_dynamics_layers,
                     rtol=args.tol, atol=args.tol)
   return partial(MLP, hidden_units=args.hidden_units,
-                 num_layers=(args.num_state_layers
+                 num_layers=(args.num_input_layers
                              + args.num_dynamics_layers
                              + args.num_output_layers))
 
@@ -60,7 +62,7 @@ def parse_arg_archive(args_path):
   # setting defaultsx 
   run_args["seed"] = 0
   run_args["hidden_units"] = 64
-  run_args["num_state_layers"] = 1
+  run_args["num_input_layers"] = 1
   run_args["num_dynamics_layers"] = 1
   run_args["num_output_layers"] = 1
   run_args["policy_net"] = 'mlp'
@@ -99,9 +101,14 @@ def main():
                                      env.action_space.shape[0],
                                      policy, value)
   model.load_weights(args.logdir+'/model') # load the weights from the logged policy
-  network = ActorCriticPolicy(model)
-  runner = EvalRunner(env, network, args.eval_step, args.render)
+  polcy_object = ActorCriticPolicy(model)
+  runner = EvalRunner(env, polcy_object, args.eval_step, args.render)
   trajectory = runner.get_next()
+  plt.scatter(trajectory['observations'][:,0],trajectory['actions'][:,0])
+  plt.scatter(trajectory['observations'][:,1],trajectory['actions'][:,0])
+  plt.scatter(trajectory['observations'][:,2],trajectory['actions'][:,0])
+  plt.scatter(trajectory['observations'][:,3],trajectory['actions'][:,0])
+  plt.show()
 
 if __name__ == "__main__":
   main()

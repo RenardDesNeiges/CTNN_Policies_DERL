@@ -9,7 +9,6 @@ from .trajectory_transforms import (
 
 class EnvRunner(BaseRunner):
   """ Reinforcement learning runner in an environment with given policy """
-  # pylint: disable=too-many-arguments
   def __init__(self, env, policy, nsteps, cutoff=None,
                asarray=True, transforms=None, step_var=None):
     super().__init__(env, policy, step_var)
@@ -27,6 +26,8 @@ class EnvRunner(BaseRunner):
     self.policy.reset()
 
   def get_next(self):
+    # TODO : support recurrent policies
+    #     - implement hidden state trajectories in the traj dict
     """ Runs the agent in the environment.  """
     trajectory = defaultdict(list, {"actions": []})
     observations = []
@@ -35,6 +36,7 @@ class EnvRunner(BaseRunner):
     self.state["env_steps"] = self.nsteps
     if self.policy.is_recurrent():
       self.state["policy_state"] = self.policy.get_state()
+      hidden_states = []
 
     for i in range(self.nsteps):
       observations.append(self.state["latest_observation"])
@@ -75,7 +77,6 @@ class EnvRunner(BaseRunner):
 
 class TrajectorySampler(BaseRunner):
   """ Samples parts of trajectory for specified number of epochs. """
-  # pylint: disable=too-many-instance-attributes
   def __init__(self, runner, num_epochs=4, num_minibatches=4,
                shuffle_before_epoch=True, transforms=None):
     super().__init__(runner.env, runner.policy, runner.step_var)
@@ -101,6 +102,7 @@ class TrajectorySampler(BaseRunner):
       self.trajectory[key] = val[indices]
 
   def get_next(self):
+    # TODO : support recurrent policies
     if self.trajectory is None or self.trajectory_is_stale():
       self.epoch_count = self.minibatch_count = 0
       self.trajectory = self.runner.get_next()

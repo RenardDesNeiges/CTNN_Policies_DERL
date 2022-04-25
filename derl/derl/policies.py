@@ -31,10 +31,23 @@ class Policy(ABC):
 class ActorCriticPolicy(Policy):
   """ Actor critic policy with discrete number of actions. """
   def __init__(self, model, distribution=None):
+    
+    def init_hidden_state(hidden_units):
+      return tf.zeros([hidden_units,1]) # TODO, check if there is a batch size to include
+    
     self.model = model
     self.distribution = distribution
+    self.value_state = init_hidden_state(self.model.value.hidden_units)
+    self.policy_state = init_hidden_state(self.model.policy.hidden_units)
 
-  def act(self, inputs, state=None, update_state=True, training=False):
+  def is_recurrent(self):
+    return self.model.value.is_recurrent or self.model.policy.is_recurrent
+
+  def get_state(self):
+    """ Returns current policy state."""
+    return [self.value_state, self.policy_state]
+
+  def act(self, inputs, state=None, update_state=True, training=False, prev_hidden=None):
     # TODO: support recurrent policies.
     _ = update_state
     if state is not None:
@@ -46,7 +59,7 @@ class ActorCriticPolicy(Policy):
 
     expand_dims = self.model.input.shape.ndims - observations.ndim
     observations = observations[(None,) * expand_dims]
-    *distribution_inputs, values = self.model(observations)
+    *distribution_inputs, values = self.model(observations) # TODO : recurrent policy support
     squeeze_dims = tuple(range(expand_dims))
     if squeeze_dims:
       distribution_inputs = [tf.squeeze(inputs, squeeze_dims)
