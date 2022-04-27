@@ -60,11 +60,13 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
 * Implement evaluation code of pre-trained policies
 * Write visualization code to output 
   * rendering of the experiments
-
-**Todo**
 * Recurrent Policies
   * Stateful models
   * Env support
+
+**Todo**
+* **Debug gradient explosion problem**
+* Recurrent Policies
   * PPO support
 * Write visualization code to output 
   * videos of the experiments

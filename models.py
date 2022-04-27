@@ -105,7 +105,7 @@ class ODEModel(tf.keras.Model):
     
   
 
-  def call(self, inputs, training=True, mask=None, state=None):
+  def call(self, inputs, state=None, training=True, mask=None):
     _ = training, mask
 
     if state is None and self.is_recurrent:
