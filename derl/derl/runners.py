@@ -40,7 +40,7 @@ class EnvRunner(BaseRunner):
 
     for i in range(self.nsteps):
       observations.append(self.state["latest_observation"])
-      act = self.policy.act(self.state["latest_observation"])
+      act = self.policy.act(self.state["latest_observation"],state=self.state["policy_state"])
       if "actions" not in act:
         raise ValueError("result of policy.act must contain 'actions' "
                          f"but has keys {list(act.keys())}")

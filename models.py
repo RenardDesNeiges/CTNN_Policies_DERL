@@ -4,6 +4,8 @@ from math import sqrt
 import tensorflow as tf
 from odeint import odeint
 
+from collections import namedtuple
+State = namedtuple("State", "policy value")
 
 class LeakyComponent(tf.keras.layers.Layer):
   def __init__(self):
@@ -45,6 +47,29 @@ class ConductanceConnectivity(tf.keras.layers.Layer):
   def compute_output_shape(self, input_shape):
     return input_shape[0]
 
+class RecurrentConnection(tf.keras.layers.Layer):
+  def __init__(self):
+    super(RecurrentConnection, self).__init__()
+
+  def build(self, input_shape):
+    weight_init = tf.random_normal_initializer(mean=1.0, stddev=0.5)
+    self.weight = tf.Variable(
+        initial_value=weight_init(shape=(1, input_shape[-1]),
+                            dtype='float32'),
+        trainable=True)
+    
+    self.add = tf.keras.layers.Add()
+    self.dot = tf.keras.layers.Dot(axes=1)
+    
+    super(RecurrentConnection, self).build(input_shape)  # Be sure to call this at the end    
+
+  def call(self, layer_input, hidden_state):
+    result = self.add([layer_input,self.dot([hidden_state,self.weight])])
+    return result
+
+  def compute_output_shape(self, input_shape):
+    return input_shape[0]
+
 class MLP(tf.keras.Sequential):
   """ Simple MLP model. """
   def __init__(self,
@@ -75,29 +100,32 @@ class ODEModel(tf.keras.Model):
     self.time = tf.cast(tf.convert_to_tensor(time), tf.float32)
     self.odeint = partial(odeint, rtol=rtol, atol=atol)
     self.is_recurrent = is_recurrent
+    if is_recurrent:
+      self.recurrent_connection = RecurrentConnection()
     
   
 
-  def call(self, inputs, training=True, mask=None, prev_hidden=None):
+  def call(self, inputs, training=True, mask=None, state=None):
     _ = training, mask
 
-    if prev_hidden is None and self.is_recurrent:
+    if state is None and self.is_recurrent:
       raise Exception('Model is recurrent but no hidden state was provided')
 
     def dynamics(inputs, time):
       time = tf.cast([[time]], tf.float32)
       inputs = tf.concat([inputs, tf.tile(time, [inputs.shape[0], 1])], -1)
       return self.dynamics(inputs)
-    latent_input = tf.keras.layers.Add()([self.input_net(inputs),prev_hidden])  \
+        
+    latent_input =  self.recurrent_connection(self.input_net(inputs),state) \
             if self.is_recurrent == True else self.input_net(inputs)
             
     hidden = self.odeint(dynamics, latent_input, self.time)[-1]
     out = self.outputs(hidden)
     
-    if self.is_recurrent:
-      return out, hidden 
-    else:
-      return out
+    if not self.is_recurrent:
+      hidden = state
+      
+    return out, hidden 
 
 
 class ODEMLP(ODEModel):
@@ -240,16 +268,19 @@ class ContinuousActorCriticModel(tf.keras.Model):
   def input(self):
     return self.input_tensor
 
-  def call(self, inputs, training=True, mask=None,prev_hidden_pol=None, prev_hidden_val=None):
+  def call(self, inputs, training=True, mask=None,state=State(None,None)):
     # TODO : recurrent support
     _ = training, mask
     
-    if self.policy.is_recurrent and prev_hidden_pol is None:
+    if self.policy.is_recurrent and state.policy is None:
       raise Exception('No previous state provided to ContinuousActorCriticModel recurrent policy network')
-    if self.value.is_recurrent and prev_hidden_val is None:
+    if self.value.is_recurrent and state.value is None:
       raise Exception('No previous state provided to ContinuousActorCriticModel recurrent value network')
     
     inputs = tf.cast(inputs, tf.float32)
     batch_size = tf.shape(inputs)[0]
     logstd = tf.tile(self.logstd[None], [batch_size, 1])
-    return self.policy(inputs), tf.exp(logstd), self.value(inputs)
+    action, policy_state = self.policy(inputs, state=state.policy)
+    value, value_state = self.value(inputs, state=state.value)
+    
+    return action, tf.exp(logstd), value, State(policy_state,value_state)

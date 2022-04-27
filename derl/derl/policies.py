@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 import tensorflow as tf
 import tensorflow_probability as tfp
 
+from collections import namedtuple
+State = namedtuple("State", "policy value")
 
 class Policy(ABC):
   """ RL policy (typically wraps a keras model).  """
@@ -31,27 +33,30 @@ class Policy(ABC):
 class ActorCriticPolicy(Policy):
   """ Actor critic policy with discrete number of actions. """
   def __init__(self, model, distribution=None):
-    
-    def init_hidden_state(hidden_units):
-      return tf.zeros([hidden_units,1]) # TODO, check if there is a batch size to include
-    
     self.model = model
     self.distribution = distribution
-    self.value_state = init_hidden_state(self.model.value.hidden_units)
-    self.policy_state = init_hidden_state(self.model.policy.hidden_units)
+
+    self.reset()
 
   def is_recurrent(self):
     return self.model.value.is_recurrent or self.model.policy.is_recurrent
 
   def get_state(self):
     """ Returns current policy state."""
-    return [self.value_state, self.policy_state]
+    return self.state
+  
+  def reset(self):
+    def init_hidden_state(model):
+      if model.is_recurrent:
+        return tf.zeros([1,model.hidden_units]) # TODO, check if there is a batch size to include
+      return None
+    
+    self.state = State(init_hidden_state(self.model.value),
+                       init_hidden_state(self.model.policy))
 
-  def act(self, inputs, state=None, update_state=True, training=False, prev_hidden=None):
-    # TODO: support recurrent policies.
+  def act(self, inputs, state=State(None, None), update_state=True, training=False):
     _ = update_state
-    if state is not None:
-      raise NotImplementedError()
+
     if training:
       observations = inputs["observations"]
     else:
@@ -59,7 +64,7 @@ class ActorCriticPolicy(Policy):
 
     expand_dims = self.model.input.shape.ndims - observations.ndim
     observations = observations[(None,) * expand_dims]
-    *distribution_inputs, values = self.model(observations) # TODO : recurrent policy support
+    *distribution_inputs, values, states = self.model(observations, state=state)
     squeeze_dims = tuple(range(expand_dims))
     if squeeze_dims:
       distribution_inputs = [tf.squeeze(inputs, squeeze_dims)
@@ -80,9 +85,12 @@ class ActorCriticPolicy(Policy):
     else:
       distribution = self.distribution(*distribution_inputs)
     if training:
-      return {"distribution": distribution, "values": values}
+      return {"distribution": distribution,
+              "values": values,
+              "policy_state": State(states.policy.numpy(),states.value.numpy())}
     actions = distribution.sample()
     log_prob = distribution.log_prob(actions)
     return {"actions": actions.numpy(),
             "log_prob": log_prob.numpy(),
-            "values": values.numpy()}
+            "values": values.numpy(),
+            "policy_state": State(states.policy.numpy(),states.value.numpy())}
