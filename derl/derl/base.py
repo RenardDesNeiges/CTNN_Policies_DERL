@@ -56,6 +56,7 @@ class BaseAlgorithm(ABC):
 
   def step(self, data):
     """ Performs single training step of the algorithm. """
+    # TODO : implement recurrent policy support
     with tf.GradientTape() as tape:
       loss = self.loss(data)
     gradients = self.preprocess_gradients(

@@ -280,7 +280,7 @@ class ContinuousActorCriticModel(tf.keras.Model):
     inputs = tf.cast(inputs, tf.float32)
     batch_size = tf.shape(inputs)[0]
     logstd = tf.tile(self.logstd[None], [batch_size, 1])
-    action, policy_state = self.policy(inputs, state=state.policy)
-    value, value_state = self.value(inputs, state=state.value)
+    action, policy_state = self.policy(inputs, state=tf.convert_to_tensor(state.policy))
+    value, value_state = self.value(inputs, state=tf.convert_to_tensor(state.value))
     
     return action, tf.exp(logstd), value, State(policy_state,value_state)

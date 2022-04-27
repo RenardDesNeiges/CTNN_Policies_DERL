@@ -46,8 +46,9 @@ class GAE:
     gae[-1] = rewards[-1] - values[-1]
     observation = trajectory["state"]["latest_observation"]
     state = trajectory["state"].get("policy_state", None)
-    last_value = self.policy.act(observation, state=state,
-                                 update_state=False)["values"]
+    act, _ = self.policy.act(observation, state=state,
+          update_state=False)
+    last_value = act["values"]
     if np.asarray(resets[-1]).ndim < last_value.ndim:
       last_value = np.squeeze(last_value, -1)
     gae[-1] += (1 - resets[-1]) * self.gamma * last_value

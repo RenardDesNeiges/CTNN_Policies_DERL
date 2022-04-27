@@ -59,6 +59,7 @@ class ActorCriticPolicy(Policy):
 
     if training:
       observations = inputs["observations"]
+      state = inputs["states"]
     else:
       observations = inputs
 
@@ -86,11 +87,11 @@ class ActorCriticPolicy(Policy):
       distribution = self.distribution(*distribution_inputs)
     if training:
       return {"distribution": distribution,
-              "values": values,
-              "policy_state": State(states.policy.numpy(),states.value.numpy())}
+              "values": values}, \
+              State(states.policy,states.value)
     actions = distribution.sample()
     log_prob = distribution.log_prob(actions)
     return {"actions": actions.numpy(),
             "log_prob": log_prob.numpy(),
-            "values": values.numpy(),
-            "policy_state": State(states.policy.numpy(),states.value.numpy())}
+            "values": values.numpy()}, \
+            State(states.policy,states.value)

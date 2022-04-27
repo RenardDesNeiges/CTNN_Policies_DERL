@@ -6,6 +6,8 @@ from .base import BaseRunner
 from .trajectory_transforms import (
     GAE, MergeTimeBatch, NormalizeAdvantages)
 
+from collections import namedtuple
+State = namedtuple("State", "policy value")
 
 class EnvRunner(BaseRunner):
   """ Reinforcement learning runner in an environment with given policy """
@@ -33,22 +35,25 @@ class EnvRunner(BaseRunner):
     observations = []
     rewards = []
     resets = []
+    states = []
     self.state["env_steps"] = self.nsteps
     if self.policy.is_recurrent():
       self.state["policy_state"] = self.policy.get_state()
-      hidden_states = []
 
     for i in range(self.nsteps):
       observations.append(self.state["latest_observation"])
-      act = self.policy.act(self.state["latest_observation"],state=self.state["policy_state"])
+      states.append(self.state["policy_state"])
+      act, new_state = self.policy.act(self.state["latest_observation"],state=self.state["policy_state"])
       if "actions" not in act:
         raise ValueError("result of policy.act must contain 'actions' "
                          f"but has keys {list(act.keys())}")
+
       for key, val in act.items():
         trajectory[key].append(val)
 
       obs, rew, done, _ = self.env.step(trajectory["actions"][-1])
       self.state["latest_observation"] = obs
+      self.state["policy_state"] = new_state
       rewards.append(rew)
       resets.append(done)
       self.step_var.assign_add(self.nenvs or 1)
@@ -57,9 +62,16 @@ class EnvRunner(BaseRunner):
       if not self.nenvs and np.all(done):
         self.state["env_steps"] = i + 1
         self.state["latest_observation"] = self.env.reset()
+        if self.policy.is_recurrent():
+          self.state["policy_state"] = self.policy.get_state()
         if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
           break
-
+    
+    def state_to_array(state):
+      policies = np.array([np.array(s.policy)[0,:] for s in state])
+      values   = np.array([np.array(s.value)[0,:] for s in state])
+      return State(policies,values)
+    
     trajectory.update(observations=observations, rewards=rewards, resets=resets)
     if self.asarray:
       for key, val in trajectory.items():
@@ -68,6 +80,7 @@ class EnvRunner(BaseRunner):
         except ValueError:
           raise ValueError(
               f"cannot convert value under key '{key}' to np.ndarray")
+    trajectory.update(states=state_to_array(states))
     trajectory["state"] = self.state
 
     for transform in self.transforms:
@@ -115,6 +128,7 @@ class TrajectorySampler(BaseRunner):
     indices = np.arange(start, min(start + mbsize, sample_size))
     minibatch = {key: val[indices] for key, val in self.trajectory.items()
                  if isinstance(val, np.ndarray)}
+    minibatch['states'] = State(self.trajectory['states'].policy[indices],self.trajectory['states'].value[indices])
 
     self.minibatch_count += 1
     if self.minibatch_count == self.num_minibatches:
@@ -134,9 +148,10 @@ def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
   transforms = [GAE(policy, gamma=gamma, lambda_=lambda_, normalize=False)]
   if not policy.is_recurrent() and getattr(env.unwrapped, "nenvs", None):
     transforms.append(MergeTimeBatch())
-  runner = EnvRunner(env, policy, num_runner_steps, transforms=transforms)
+  runner = EnvRunner(env, policy, num_runner_steps, cutoff=False, transforms=transforms)
   runner = TrajectorySampler(runner, num_epochs=num_epochs,
                              num_minibatches=num_minibatches,
+                             shuffle_before_epoch=(not policy.is_recurrent()),
                              transforms=[NormalizeAdvantages()])
   return runner
 

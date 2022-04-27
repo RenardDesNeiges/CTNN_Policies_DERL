@@ -32,7 +32,7 @@ class PPO(BaseAlgorithm):
   def policy_loss(self, trajectory, act=None):
     """ Compute policy loss (including entropy regularization). """
     if act is None:
-      act = self.policy.act(trajectory, training=True)
+      act, _ = self.policy.act(trajectory, training=True)
     if "advantages" not in trajectory:
       raise ValueError("trajectory does not contain 'advantages'")
 
@@ -69,7 +69,7 @@ class PPO(BaseAlgorithm):
   def value_loss(self, trajectory, act=None):
     """ Computes value loss. """
     if act is None:
-      act = self.policy.act(trajectory, training=True)
+      act, _ = self.policy.act(trajectory, training=True)
     if "value_targets" not in trajectory:
       raise ValueError("trajectory does not contain 'value_targets'")
 
@@ -99,8 +99,9 @@ class PPO(BaseAlgorithm):
     return value_loss
 
   def loss(self, data):
+    # TODO : implement recurrent policy support
     """ Returns ppo loss for given data (trajectory dict). """
-    act = self.policy.act(data, training=True)
+    act, _ = self.policy.act(data, training=True)
     policy_loss = self.policy_loss(data, act)
     value_loss = self.value_loss(data, act)
     loss = policy_loss + self.value_loss_coef * value_loss
