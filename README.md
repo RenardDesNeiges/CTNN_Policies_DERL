@@ -3,8 +3,8 @@
 ![inverted pendulum v1 in mujoco](plots/inv_pendulum_ltc_1.gif)
 *Inverted pendulum v1 in mujoco solved by a liquid time-constant network*
 
-![inverted pendulum v1 in mujoco](plots/LTC_state_plots.png)
-*Activation of the hidden states of the 64 LTC neurons used to solve the inverted problem above*
+<!-- ![inverted pendulum v1 in mujoco](plots/LTC_state_plots.png) -->
+<!-- *Activation of the hidden states of the 64 LTC neurons used to solve the inverted problem above* -->
 
 This repository contains experiments run in the context of the semester project I worked on at EPFL while under the supervision of Dr. Guillaume Bellegarda, Pr. Auke Ijspeert (both from EPFL's Biorobotics laboratory) and Pr. Wulfram Gerstner (from EPFL's Laboratory of Computational Neurosciences). The goal is to train time-continuous neural networks (more specifically LTCs) for strongly non-linear control tasks (ideally locomotion of quadruped robots) using reinforcement learning. The original code base implementing the adjoint sensitivity method and the training environment from which I forked this repo as well as the DERL package was written by Mikhail Konobeev (https://github.com/MichaelKonobeev).
 
