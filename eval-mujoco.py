@@ -106,10 +106,12 @@ def main():
   polcy_object = ActorCriticPolicy(model)
   runner = EvalRunner(env, polcy_object, args.eval_step, args.render)
   trajectory = runner.get_next()
-  plt.scatter(trajectory['observations'][:,0],trajectory['actions'][:,0])
-  plt.scatter(trajectory['observations'][:,1],trajectory['actions'][:,0])
-  plt.scatter(trajectory['observations'][:,2],trajectory['actions'][:,0])
-  plt.scatter(trajectory['observations'][:,3],trajectory['actions'][:,0])
+  
+  # rough RNN state display
+  policy_states = trajectory['states'][:,0,0,:]
+  fig, axs = plt.subplots(2)
+  axs[0].plot(trajectory['observations'])
+  axs[1].imshow(np.transpose(policy_states), extent=[0, 1, 0, 1])
   plt.show()
 
 if __name__ == "__main__":
