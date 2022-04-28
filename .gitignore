@@ -6,3 +6,4 @@ __pycache__/*
 *.pyc
 .vscode/*
 __pycache__/
+derl/scripts/__pycache__
