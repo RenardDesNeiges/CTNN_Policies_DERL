@@ -16,7 +16,7 @@ ACCEPTED_MODELS = ['mlp','node','ctrnn','ltc']
 
 INT_ARGS = ["seed", "hidden_units", "num_input_layers", "num_dynamics_layers", "num_output_layers","log_period","nenvs","num_epochs","num_minibatches","num_runner_steps"]
 FLOAT_ARGS = ["tol","cliprange","entropy_coef","gamma","lambda_","lr","max_grad_norm","num_train_steps","optimizer_epsilon","value_loss_coef"]
-BOOL_ARGS = ["save_weights"]
+BOOL_ARGS = ["save_weights",'recurrent_policy', 'recurrent_value']
 
 def _parser():
   """ Parse the input arguments """
@@ -29,26 +29,26 @@ def _parser():
   
 
 
-def make_mlp_class(model_arg, args):
+def make_mlp_class(model_arg, is_recurrent, args):
   """ Returns (partial) MLP class with args from args set. """
   if model_arg == 'node':
     return partial(ODEMLP, hidden_units=args.hidden_units,
                    num_input_layers=args.num_input_layers,
                    num_dynamics_layers=args.num_dynamics_layers,
                    num_output_layers=args.num_dynamics_layers,
-                   rtol=args.tol, atol=args.tol)
+                   rtol=args.tol, atol=args.tol, is_recurrent=is_recurrent)
   elif model_arg == 'ctrnn':
     return partial(CTRNN, hidden_units=args.hidden_units,
                     num_input_layers=args.num_input_layers,
                     num_dynamics_layers=args.num_dynamics_layers,
                     num_output_layers=args.num_dynamics_layers,
-                    rtol=args.tol, atol=args.tol)
+                    rtol=args.tol, atol=args.tol, is_recurrent=is_recurrent)
   elif model_arg == 'ltc':
     return partial(LTC, hidden_units=args.hidden_units,
                     num_input_layers=args.num_input_layers,
                     num_dynamics_layers=args.num_dynamics_layers,
                     num_output_layers=args.num_dynamics_layers,
-                    rtol=args.tol, atol=args.tol)
+                    rtol=args.tol, atol=args.tol, is_recurrent=is_recurrent)
   return partial(MLP, hidden_units=args.hidden_units,
                  num_layers=(args.num_input_layers
                              + args.num_dynamics_layers
@@ -59,7 +59,7 @@ def parse_arg_archive(args_path):
     args_array = f.readlines()
     
   run_args = dict()
-  # setting defaultsx 
+  # setting defaults
   run_args["seed"] = 0
   run_args["hidden_units"] = 64
   run_args["num_input_layers"] = 1
@@ -70,6 +70,8 @@ def parse_arg_archive(args_path):
   run_args["tol"] = 1e-3
   run_args["save_weights"] = True
   run_args["log_period"] = 1
+  run_args["recurrent_policy"] = False
+  run_args["recurrent_value"] = False
   
   for el in [a.replace('\n','').split(': ') for a in args_array]:
     run_args[el[0]] = el[1]
@@ -95,8 +97,8 @@ def main():
   env = derl.env.make(run_args.env_id)
   if hasattr(run_args, 'seed'):
       env.seed(run_args.seed)
-  policy = make_mlp_class(run_args.policy_net, run_args)(env.action_space.shape[0])
-  value = make_mlp_class(run_args.value_net, run_args)(1)
+  policy = make_mlp_class(run_args.policy_net, run_args.recurrent_policy, run_args)(env.action_space.shape[0])
+  value = make_mlp_class(run_args.value_net, run_args.recurrent_value, run_args)(1)
   model = ContinuousActorCriticModel(env.observation_space.shape,
                                      env.action_space.shape[0],
                                      policy, value)

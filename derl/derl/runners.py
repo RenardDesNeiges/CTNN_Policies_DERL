@@ -28,8 +28,6 @@ class EnvRunner(BaseRunner):
     self.policy.reset()
 
   def get_next(self):
-    # TODO : support recurrent policies
-    #     - implement hidden state trajectories in the traj dict
     """ Runs the agent in the environment.  """
     trajectory = defaultdict(list, {"actions": []})
     observations = []
@@ -37,8 +35,8 @@ class EnvRunner(BaseRunner):
     resets = []
     states = []
     self.state["env_steps"] = self.nsteps
-    
     self.state["policy_state"] = State(None, None)
+    
     if self.policy.is_recurrent():
       self.state["policy_state"] = self.policy.get_state()
 
@@ -162,30 +160,33 @@ def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
 class EvalRunner(EnvRunner):
   
   def __init__(self, env, policy, nsteps, render=False):
-    super().__init__(env, policy, nsteps, cutoff=None,
+    super().__init__(env, policy, nsteps, cutoff=False,
                asarray=True, transforms=None, step_var=None)
     self.render = render
     
   def get_next(self, n_steps = None):
     """ Runs the agent in the environment.  """
+    if n_steps is None:
+      n_steps = self.nsteps
+      
     trajectory = defaultdict(list, {"actions": []})
     observations = []
     rewards = []
-    policy_states = []
     resets = []
-
-    if n_steps is None:
-      n_steps = self.nsteps
-    self.state["env_steps"] = n_steps       
+    states = []
+    self.state["env_steps"] = n_steps
+    self.state["policy_state"] = State(None, None)
     
     if self.policy.is_recurrent():
       self.state["policy_state"] = self.policy.get_state()
+      
     if self.render:
       self.env.render()
       
     for i in range(n_steps):
       observations.append(self.state["latest_observation"])
-      act = self.policy.act(self.state["latest_observation"])
+      states.append(self.state["policy_state"])
+      act, new_state = self.policy.act(self.state["latest_observation"],state=self.state["policy_state"])
       if "actions" not in act:
         raise ValueError("result of policy.act must contain 'actions' "
                           f"but has keys {list(act.keys())}")
@@ -198,23 +199,28 @@ class EvalRunner(EnvRunner):
         self.env.render()
       
       self.state["latest_observation"] = obs
+      self.state["policy_state"] = new_state
       rewards.append(rew)
       resets.append(done)
-      policy_states.append(self.policy.get_state())
       self.step_var.assign_add(self.nenvs or 1)
 
       # Only reset if the env is not batched. Batched envs should auto-reset.
       if not self.nenvs and np.all(done):
         self.state["env_steps"] = i + 1
         self.state["latest_observation"] = self.env.reset()
+        if self.policy.is_recurrent():
+          self.state["policy_state"] = self.policy.get_state()
         if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
           break
 
     self.env.reset()
     self.env.close()
 
-    trajectory.update(observations=observations, rewards=rewards, 
-                      resets=resets, policy_states=policy_states)
+    trajectory.update(observations=observations, 
+                      rewards=rewards, 
+                      resets=resets,
+                      states=states)
+    
     if self.asarray:
       for key, val in trajectory.items():
         try:

@@ -64,12 +64,15 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
   * PPO support
 * Debug
   * Add action variance measurements to log
+  * Fix the non-recurrent node/ltc/ctrnn class not working with the framework modifications
+  * Make the eval runner work with the recurrent policies
 * Implement a recurrent CT-RNN model
 * Implement a recurrent Liquid Time-Constant Neural network model
 
 **Todo**
+* Cleanup
+  * Have a unique make_mlp_class() function for eval and run
 * Debug
-  * Fix the non-recurrent node/ltc/ctrnn class not working with the framework modifications
   * Make the MLP class work with the framework modifications
 * Write environment masking preprocessing class
 * Write visualization code to output 
