@@ -108,6 +108,7 @@ class PPO(BaseAlgorithm):
     loss = policy_loss + self.value_loss_coef * value_loss
 
     tf.contrib.summary.scalar("env/actions_l2", np.average(np.linalg.norm(data['actions'],axis=1)), step=self.step_var)
+    tf.contrib.summary.scalar("env/actions_l2_variance", np.std(np.linalg.norm(data['actions'],axis=1)), step=self.step_var)
     tf.contrib.summary.scalar("env/values_l2", np.average(np.linalg.norm(data['values'],axis=1)), step=self.step_var)
     tf.contrib.summary.scalar("ppo/loss", loss, step=self.step_var)
     return loss
