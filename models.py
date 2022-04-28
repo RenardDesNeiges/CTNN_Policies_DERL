@@ -86,6 +86,7 @@ class MLP(tf.keras.Sequential):
             bias_initializer=tf.initializers.zeros(),
         ) for i in range(1, num_layers + 1)
     ])
+    self.is_recurrent = False
 
 
 class ODEModel(tf.keras.Model):
@@ -100,8 +101,9 @@ class ODEModel(tf.keras.Model):
     self.time = tf.cast(tf.convert_to_tensor(time), tf.float32)
     self.odeint = partial(odeint, rtol=rtol, atol=atol)
     self.is_recurrent = is_recurrent
-    if is_recurrent:
-      self.recurrent_connection = RecurrentConnection()
+    # if is_recurrent:
+      # self.recurrent_connection = RecurrentConnection()
+
     
   
 
@@ -115,11 +117,12 @@ class ODEModel(tf.keras.Model):
       time = tf.cast([[time]], tf.float32)
       inputs = tf.concat([inputs, tf.tile(time, [inputs.shape[0], 1])], -1)
       return self.dynamics(inputs)
-        
-    latent_input =  self.recurrent_connection(self.input_net(inputs),state) \
+
+    latent_input = tf.concat([self.input_net(inputs),state],axis=1) \
             if self.is_recurrent == True else self.input_net(inputs)
             
-    hidden = self.odeint(dynamics, latent_input, self.time)[-1]
+    latent_out = self.odeint(dynamics, latent_input, self.time)[-1]
+    hidden = latent_out[:,:latent_out.shape[1]//2]
     out = self.outputs(hidden)
     
     if not self.is_recurrent:
@@ -145,7 +148,15 @@ class ODEMLP(ODEModel):
         bias_initializer=tf.initializers.zeros())
 
     input_net = make_sequential(num_input_layers, **layer_kws) # TODO : implement recurrent policy
+    
+    
+    layer_kws = dict(
+        units=2*hidden_units,
+        activation=tf.nn.tanh,
+        kernel_initializer=tf.initializers.orthogonal(sqrt(2)),
+        bias_initializer=tf.initializers.zeros())
     dynamics = make_sequential(num_dynamics_layers, **layer_kws)
+    
 
     layer_kws.update(units=output_units, activation=None,
                      kernel_initializer=tf.initializers.orthogonal(1))
@@ -280,7 +291,17 @@ class ContinuousActorCriticModel(tf.keras.Model):
     inputs = tf.cast(inputs, tf.float32)
     batch_size = tf.shape(inputs)[0]
     logstd = tf.tile(self.logstd[None], [batch_size, 1])
-    action, policy_state = self.policy(inputs, state=tf.convert_to_tensor(state.policy))
-    value, value_state = self.value(inputs, state=tf.convert_to_tensor(state.value))
+    
+    if state.policy is not None:
+      action, policy_state = self.policy(inputs, state=tf.convert_to_tensor(state.policy))
+    else:
+      action, policy_state = self.policy(inputs)
+      
+    if state.policy is not None:
+      action, policy_state = self.policy(inputs, state=tf.convert_to_tensor(state.policy))
+    else:
+      action, policy_state = self.policy(inputs)
+      
+    value, value_state = self.value(inputs, state=(None if state.value is None else tf.convert_to_tensor(state.value)))
     
     return action, tf.exp(logstd), value, State(policy_state,value_state)

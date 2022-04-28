@@ -63,11 +63,14 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
 * Recurrent Policies
   * Stateful models
   * Env support
+* Debug gradient explosion problem
 
 **Todo**
-* **Debug gradient explosion problem**
+* Debug
+  * Fix the non-ode class not work with the framework modifications
+  * Make the MLP class work with the framework modifications
 * Recurrent Policies
-  * PPO support
+  * PPO support ???
 * Write visualization code to output 
   * videos of the experiments
   * internal state evolution of the RNNs

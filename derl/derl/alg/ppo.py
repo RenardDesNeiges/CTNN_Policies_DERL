@@ -2,6 +2,7 @@
 Implements Proximal Policy Optimization algorithm.
 """
 import tensorflow as tf
+import numpy as np
 
 from derl.base import BaseAlgorithm
 from derl.common import (
@@ -105,6 +106,9 @@ class PPO(BaseAlgorithm):
     policy_loss = self.policy_loss(data, act)
     value_loss = self.value_loss(data, act)
     loss = policy_loss + self.value_loss_coef * value_loss
+
+    tf.contrib.summary.scalar("env/actions_l2", np.average(np.linalg.norm(data['actions'],axis=1)), step=self.step_var)
+    tf.contrib.summary.scalar("env/values_l2", np.average(np.linalg.norm(data['values'],axis=1)), step=self.step_var)
     tf.contrib.summary.scalar("ppo/loss", loss, step=self.step_var)
     return loss
 

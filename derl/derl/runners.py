@@ -37,6 +37,8 @@ class EnvRunner(BaseRunner):
     resets = []
     states = []
     self.state["env_steps"] = self.nsteps
+    
+    self.state["policy_state"] = State(None, None)
     if self.policy.is_recurrent():
       self.state["policy_state"] = self.policy.get_state()
 
@@ -66,10 +68,10 @@ class EnvRunner(BaseRunner):
           self.state["policy_state"] = self.policy.get_state()
         if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
           break
-    
-    def state_to_array(state):
-      policies = np.array([np.array(s.policy)[0,:] for s in state])
-      values   = np.array([np.array(s.value)[0,:] for s in state])
+        
+    def state_to_array(states):
+      policies = np.array([np.array(s.policy)[0,:]for s in states]) if states[0].policy is not None else None
+      values   = np.array([np.array(s.value)[0,:]for s in states]) if states[0].value is not None else None
       return State(policies,values)
     
     trajectory.update(observations=observations, rewards=rewards, resets=resets)
@@ -128,7 +130,9 @@ class TrajectorySampler(BaseRunner):
     indices = np.arange(start, min(start + mbsize, sample_size))
     minibatch = {key: val[indices] for key, val in self.trajectory.items()
                  if isinstance(val, np.ndarray)}
-    minibatch['states'] = State(self.trajectory['states'].policy[indices],self.trajectory['states'].value[indices])
+    minibatch['states'] = State(self.trajectory['states'].policy[indices] \
+        if self.trajectory['states'].policy is not None else None ,\
+        self.trajectory['states'].value[indices] if self.trajectory['states'].value is not None else None)
 
     self.minibatch_count += 1
     if self.minibatch_count == self.num_minibatches:
