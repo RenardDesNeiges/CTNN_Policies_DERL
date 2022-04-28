@@ -1,60 +1,15 @@
 """ Script to run muojco experiment on a single env. """
-from functools import partial
+
 import tensorflow as tf
 import derl
-from models import ContinuousActorCriticModel, ODEMLP, MLP, CTRNN, LTC
+from models import ContinuousActorCriticModel
+from utils import make_mlp_class, get_train_parser, ACCEPTED_MODELS
 tf.enable_eager_execution()
-
-ACCEPTED_MODELS = ['mlp','node','ctrnn','ltc']
-
-def get_parser(base_parser):
-  """ Adds neuralode-rl arguments to a give base parser. """
-  base_parser.add_argument("--seed", type=int, default=0)
-  base_parser.add_argument("--hidden-units", type=int, default=64)
-  base_parser.add_argument("--num-input-layers", type=int, default=1)
-  base_parser.add_argument("--num-dynamics-layers", type=int, default=1)
-  base_parser.add_argument("--num-output-layers", type=int, default=1)
-  base_parser.add_argument("--policy-net", type=str, default="mlp")
-  base_parser.add_argument("--value-net", type=str, default="mlp")
-  base_parser.add_argument("--recurrent-policy", type=bool, default=False)
-  base_parser.add_argument("--recurrent-value", type=bool, default=False)
-  base_parser.add_argument("--tol", type=float, default=1e-3)
-  base_parser.add_argument("--save_weights", type=bool, default=True)
-  return base_parser
-
-
-def make_mlp_class(model_arg, is_recurrent, args):
-  """ Returns (partial) MLP class with args from args set. """
-  if model_arg == 'node':
-    return partial(ODEMLP, hidden_units=args.hidden_units,
-                   num_input_layers=args.num_input_layers,
-                   num_dynamics_layers=args.num_dynamics_layers,
-                   num_output_layers=args.num_dynamics_layers,
-                   rtol=args.tol, atol=args.tol, is_recurrent=is_recurrent)
-  elif model_arg == 'ctrnn':
-    return partial(CTRNN, hidden_units=args.hidden_units,
-                    num_input_layers=args.num_input_layers,
-                    num_dynamics_layers=args.num_dynamics_layers,
-                    num_output_layers=args.num_dynamics_layers,
-                    rtol=args.tol, atol=args.tol, is_recurrent=is_recurrent)
-  elif model_arg == 'ltc':
-    return partial(LTC, hidden_units=args.hidden_units,
-                    num_input_layers=args.num_input_layers,
-                    num_dynamics_layers=args.num_dynamics_layers,
-                    num_output_layers=args.num_dynamics_layers,
-                    rtol=args.tol, atol=args.tol, is_recurrent=is_recurrent)
-  else:
-    if is_recurrent:
-      raise Exception('No recurrent implementation for MLP policies')
-    return partial(MLP, hidden_units=args.hidden_units,
-                 num_layers=(args.num_input_layers
-                             + args.num_dynamics_layers
-                             + args.num_output_layers))
 
 
 def main():
   """ Entrance point. """
-  parser = get_parser(derl.get_parser(derl.PPOLearner.get_defaults("mujoco")))
+  parser = get_train_parser(derl.get_parser(derl.PPOLearner.get_defaults("mujoco")))
   args = derl.log_args(parser.parse_args())
 
   if args.policy_net not in ACCEPTED_MODELS:

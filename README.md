@@ -1,6 +1,7 @@
 # Continuous Time Neural Networks Policies for Continuous Control (CTNN-Policies)
 
 ![inverted pendulum v1 in mujoco](plots/inv_pendulum_ltc_1.gif)
+
 *Inverted pendulum v1 in mujoco solved by a liquid time-constant network*
 
 <!-- ![inverted pendulum v1 in mujoco](plots/LTC_state_plots.png) -->
