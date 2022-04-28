@@ -7,3 +7,4 @@ __pycache__/*
 .vscode/*
 __pycache__/
 derl/scripts/__pycache__
+.ipynb_checkpoints/*

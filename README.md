@@ -1,6 +1,6 @@
 # Continuous Time Neural Networks Policies for Continuous Control (CTNN-Policies)
 
-![inverted pendulum v1 in mujoco](plots/inv_pendulum_ltc_1.gif)
+[inverted pendulum v1 in mujoco](plots/LTC_state_plots.png)
 
 *Inverted pendulum v1 in mujoco solved by a liquid time-constant network*
 
@@ -75,16 +75,17 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
   * Make the eval runner work with the recurrent policies
 * Implement a recurrent CT-RNN model
 * Implement a recurrent Liquid Time-Constant Neural network model
-
-**Todo**
+* Write visualization code to
+  * internal state evolution of the RNNs
 * Cleanup
   * Have a unique make_mlp_class() function for eval and run
+
+**Todo**
 * Debug
   * Make the MLP class work with the framework modifications
 * Write environment masking preprocessing class
 * Write visualization code to output 
   * videos of the experiments
-  * internal state evolution of the RNNs
   * plot network topology
 * Run experiments on 
   * more complex gym environments

@@ -1,7 +1,7 @@
 """ Utilities to parse command line arguments and setup mujoco training/eval envs. """
 
 from functools import partial
-from models import ContinuousActorCriticModel, ODEMLP, MLP, CTRNN, LTC
+from models import ODEMLP, MLP, CTRNN, LTC
 from types import SimpleNamespace
 import argparse
 
