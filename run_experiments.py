@@ -9,7 +9,7 @@ PROJECT_FOLDER = "/home/renard/Documents/CTNN_Policies"
 NODE = "dev"
 JOBNAME = "LTC_PPO"
 MAX_TIME = 10
-SCRIPT = "tune_wrapper.py"
+SCRIPT = "test_script.py"
 SCRIPT_NAME = "run_cluster.sh"
 
 if NODE == "dev":
