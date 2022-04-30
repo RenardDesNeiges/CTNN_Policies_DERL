@@ -35,28 +35,19 @@ python run-mujoco.py --env-id HalfCheetah-v3 \
     --logdir logdir/ode/half-cheetah.00 --ode-policy --ode-value
 ```
 
-<!-- You can also schedule all of the experiments using `task-spooler`
-which could be install on Ubuntu with `sudo apt-get install task-spooler`.
-After that launching `run.py` should work:
-```{bash}
-python run.py --logdir-prefix logdir/mlp/
-python run.py --logdir-prefix logdir/ode/ --ode-policy --ode-value
-```
-With the same script it is possible to run only a subset of environments, e.g.
-by specifying `--env-ids roboschool` or `--env-ids mujoco` or (possibly in
-addition) one or several env ids.
+## Available environments
 
-This will schedule 5 runs with different seeds for each MuJoCo env,
-and 3 runs with different seeds for each Roboschool env. You can
-set the number of tasks that could run concurrently to e.g. 5
-using the following command:
-```{bash}
-tsp -S 5
+All the mujoco gym environments
+
 ```
-Additionally, to watch the task queue you may run
-```{bash}
-watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
-``` -->
+HalfCheetah-v3
+Hopper-v3
+InvertedDoublePendulum-v2
+InvertedPendulum-v2
+Reacher-v2
+Swimmer-v3
+Walker2d-v3
+```
 
 ## Todo-list
 
@@ -80,9 +71,9 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
 * Cleanup
   * Have a unique make_mlp_class() function for eval and run
 * SLURM python wrapper
+* Task scheduler for experiments
 
 **Todo**
-* Task scheduler for experiments
 * Debug
   * Make the MLP class work with the framework modifications
   * Make the slurm wrapper output SLURM log files

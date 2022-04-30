@@ -9,7 +9,7 @@ PROJECT_FOLDER = "/home/renard/Documents/CTNN_Policies_DERL"
 """ Generating the output folder """
 def create_output_folder(_jobname):
   datestr = datetime.now().strftime("%Y-%m-%d-%H-%M")
-  foldername = "/home/renard/Documents/experiments/R_{}_{}".format(datestr,_jobname)
+  foldername = "/home/renard/Documents/experiments/R_{}_{}".format(_jobname,datestr)
   print("Created {} folder".format(foldername))
   os.mkdir(foldername)
   return foldername
@@ -47,9 +47,12 @@ def write_sbatch_shell(header, start_runs, foldername, _sbatch_name):
 
   return script_path
 
-def def_arguments():
+def def_args(argdict):
 
   arguments = ''
+
+  for key in argdict:
+    arguments += (key + ' ' + argdict[key])
 
   return arguments
 
@@ -79,13 +82,31 @@ foldername = create_output_folder(JOBNAME)
 print("Copying the script file for tracability")
 os.system('cp {} {}/archive_{}'.format(SCRIPT,foldername,SCRIPT)) 
 
-arguments = ''
+argdict = { '--num-train-steps': '70000',
+            '--policy-net': 'ltc',
+            '--value-net': 'ltc',
+            '--recurrent-policy': 'True',
+            '--recurrent-value': 'True'}
+
+env_dicts = [ {**argdict,
+              '--env-id': 'InvertedPendulum-v2',
+              '--logdir': 'logdir/ltc/InvertedPendulum',}, 
+              {**argdict,
+              '--env-id': 'InvertedDoublePendulum-v2',
+              '--logdir': 'logdir/ltc/InvertedDoublePendulum',}, 
+              {**argdict,
+              '--env-id': 'Swimmer-v3',
+              '--logdir': 'logdir/ltc/Swimmer',}, ]
+
+arguments = def_args(argdict)
 
 header = _slurm_head(foldername,cpu,mem,JOBNAME,MAX_TIME)
 scriptout = "{}/script_out.txt".format(foldername)
-start_runs = ["{} -u {}/{} {} > {} \n".format(PYTHON_VERSION,PROJECT_FOLDER,SCRIPT,arguments,scriptout)]
+
+start_runs = ["{} -u {}/{} {} > {} \n".format(PYTHON_VERSION,PROJECT_FOLDER,SCRIPT,def_args(agd),agd['--env-id']+'.txt')  for agd in env_dicts]
+
 script_path = write_sbatch_shell(header, start_runs, foldername, SBATCH_NAME)
 
 ################ Running the script
 print("running sbatch")
-# os.system("sbatch {}".format(script_path))
+os.system("sbatch {}".format(script_path))
