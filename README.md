@@ -79,11 +79,13 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
   * internal state evolution of the RNNs
 * Cleanup
   * Have a unique make_mlp_class() function for eval and run
+* SLURM python wrapper
 
 **Todo**
 * Task scheduler for experiments
 * Debug
   * Make the MLP class work with the framework modifications
+  * Make the slurm wrapper output SLURM log files
 * Write environment masking preprocessing class
 * Write visualization code to output 
   * videos of the experiments
