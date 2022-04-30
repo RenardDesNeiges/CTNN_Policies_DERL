@@ -1,14 +1,14 @@
 import os
 import stat
 from datetime import datetime
-PYTHON_VERSION = "/shared/renard/conda/envs/nodeRL/bin/python"
+PYTHON_VERSION = "/shared/renard/conda/envs/CTNN/bin/python"
 PROJECT_FOLDER = "/home/renard/Documents/CTNN_Policies_DERL"
 
 ################ Utility functions
 
 """ Generating the output folder """
 def create_output_folder(_jobname):
-  datestr = datetime.now().strftime("%Y-%m-%d-%H-%M")
+  datestr = datetime.now().strftime("%m%d%H%M")
   foldername = "/home/renard/Documents/experiments/R_{}_{}".format(_jobname,datestr)
   print("Created {} folder".format(foldername))
   os.mkdir(foldername)
@@ -52,7 +52,7 @@ def def_args(argdict):
   arguments = ''
 
   for key in argdict:
-    arguments += (key + ' ' + argdict[key])
+    arguments += (key + ' ' + argdict[key] + ' ')
 
   return arguments
 
@@ -61,7 +61,7 @@ def def_args(argdict):
 NODE = "dev"
 JOBNAME = "LTC_PPO"
 MAX_TIME = 2
-SCRIPT = "test_script.py"
+SCRIPT = "run-mujoco.py"
 SBATCH_NAME = "run_cluster.sh"
 
 if NODE == "dev":
@@ -101,9 +101,9 @@ env_dicts = [ {**argdict,
 arguments = def_args(argdict)
 
 header = _slurm_head(foldername,cpu,mem,JOBNAME,MAX_TIME)
-scriptout = "{}/script_out.txt".format(foldername)
 
-start_runs = ["{} -u {}/{} {} > {} \n".format(PYTHON_VERSION,PROJECT_FOLDER,SCRIPT,def_args(agd),agd['--env-id']+'.txt')  for agd in env_dicts]
+
+start_runs = ["{} -u {}/{} {} > {} \n".format(PYTHON_VERSION,PROJECT_FOLDER,SCRIPT,def_args(agd),foldername+'/'+agd['--env-id']+'.txt')  for agd in env_dicts]
 
 script_path = write_sbatch_shell(header, start_runs, foldername, SBATCH_NAME)
 
