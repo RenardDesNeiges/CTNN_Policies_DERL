@@ -7,10 +7,9 @@ import re
 
 #TODO : remove the roboschool envs (no experiments to be run in roboschool)
 
-def get_envs(env_type="mujoco"):
+def get_envs():
   """ Returns list of default envs. """
-  return {
-      "mujoco": [
+  return [
           "HalfCheetah-v3",
           "Hopper-v3",
           "InvertedDoublePendulum-v2",
@@ -18,19 +17,12 @@ def get_envs(env_type="mujoco"):
           "Reacher-v2",
           "Swimmer-v3",
           "Walker2d-v3",
-      ],
-      "roboschool": [
-          "RoboschoolHumanoid-v1",
-          "RoboschoolHumanoidFlagrun-v1",
-          "RoboschoolHumanoidFlagrunHarder-v1",
       ]
-  }[env_type]
 
 
 def get_parser():
   """ Returns parser. """
   parser = argparse.ArgumentParser()
-  parser.add_argument("--env-ids", nargs='+', default=["mujoco", "roboschool"])
   parser.add_argument("--logdir-prefix", required=True)
   parser.add_argument("--seed", nargs='+', type=int, default=None)
   parser.add_argument("--dry", action="store_true")

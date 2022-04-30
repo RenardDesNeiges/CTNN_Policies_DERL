@@ -81,6 +81,7 @@ watch -n 2 zsh -c "tsp | tr -s ' ' | cut -d ' ' -f 1,2,4,8-"
   * Have a unique make_mlp_class() function for eval and run
 
 **Todo**
+* Task scheduler for experiments
 * Debug
   * Make the MLP class work with the framework modifications
 * Write environment masking preprocessing class
