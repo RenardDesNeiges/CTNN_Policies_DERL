@@ -275,7 +275,6 @@ class LTC(ODEModel):
     out = self.outputs(hidden)
     return out, hidden
 
-
 class ContinuousActorCriticModel(tf.keras.Model):
   #TODO recurrent support
   """ Adds variance variable to policy and value models to create new model. """
@@ -298,7 +297,6 @@ class ContinuousActorCriticModel(tf.keras.Model):
     return self.input_tensor
 
   def call(self, inputs, training=True, mask=None,state=State(None,None)):
-    # TODO : recurrent support
     _ = training, mask
     
     if self.policy.is_recurrent and state.policy is None:
