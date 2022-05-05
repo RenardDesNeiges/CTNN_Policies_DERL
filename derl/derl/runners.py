@@ -1,6 +1,8 @@
 """ RL env runner """
 from collections import defaultdict
+from matplotlib.pyplot import plot
 import numpy as np
+import random
 
 from .base import BaseRunner
 from .trajectory_transforms import (
@@ -166,6 +168,13 @@ class EvalRunner(EnvRunner):
     
   def get_next(self, n_steps = None):
     """ Runs the agent in the environment.  """
+    
+    if self.render:
+      self.env.render()
+    
+    rand = random.randint(0,20000)
+    print(rand)
+    self.env.seed(random.randint(0,20000))
     if n_steps is None:
       n_steps = self.nsteps
       
@@ -180,10 +189,10 @@ class EvalRunner(EnvRunner):
     if self.policy.is_recurrent():
       self.state["policy_state"] = self.policy.get_state()
       
-    if self.render:
-      self.env.render()
-      
     for i in range(n_steps):
+      if self.render:
+        self.env.render()
+        
       observations.append(self.state["latest_observation"])
       states.append(self.state["policy_state"])
       act, new_state = self.policy.act(self.state["latest_observation"],state=self.state["policy_state"])
@@ -194,10 +203,7 @@ class EvalRunner(EnvRunner):
         trajectory[key].append(val)
 
       obs, rew, done, _ = self.env.step(trajectory["actions"][-1])
-      
-      if self.render:
-        self.env.render()
-      
+
       self.state["latest_observation"] = obs
       self.state["policy_state"] = new_state
       rewards.append(rew)
@@ -207,6 +213,7 @@ class EvalRunner(EnvRunner):
       # Only reset if the env is not batched. Batched envs should auto-reset.
       if not self.nenvs and np.all(done):
         self.state["env_steps"] = i + 1
+        self.env.seed(rand)
         self.state["latest_observation"] = self.env.reset()
         if self.policy.is_recurrent():
           self.state["policy_state"] = self.policy.get_state()

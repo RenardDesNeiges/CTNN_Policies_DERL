@@ -5,6 +5,7 @@ import derl
 from derl import EvalRunner, ActorCriticPolicy
 from models import ContinuousActorCriticModel
 from utils import make_mlp_class, eval_parser, parse_arg_archive
+from visualization import state_action_obs_plot
 
 tf.enable_eager_execution()
 
@@ -24,9 +25,11 @@ def main():
                                      env.action_space.shape[0],
                                      policy, value)
   model.load_weights(args.logdir+'/model') # load the weights from the logged policy
-  polcy_object = ActorCriticPolicy(model)
-  runner = EvalRunner(env, polcy_object, args.eval_step, args.render)
+  policy_object = ActorCriticPolicy(model)
+  runner = EvalRunner(env, policy_object, args.eval_step, args.render)
   trajectory = runner.get_next()
+  state_action_obs_plot(trajectory)
+
 
 if __name__ == "__main__":
   main()
