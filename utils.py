@@ -2,6 +2,7 @@
 
 from functools import partial
 from models import ODEMLP, MLP, CTRNN, LTC
+from preprocessing import Mask_vec
 from types import SimpleNamespace
 import argparse
 
@@ -9,6 +10,9 @@ ACCEPTED_MODELS = ['mlp','node','ctrnn','ltc']
 INT_ARGS = ["seed", "hidden_units", "num_input_layers", "num_dynamics_layers", "num_output_layers","log_period","nenvs","num_epochs","num_minibatches","num_runner_steps"]
 FLOAT_ARGS = ["tol","cliprange","entropy_coef","gamma","lambda_","lr","max_grad_norm","num_train_steps","optimizer_epsilon","value_loss_coef"]
 BOOL_ARGS = ["save_weights",'recurrent_policy', 'recurrent_value']
+OBS_PREPROCESSORS = {'invPendulumNoVelocity': Mask_vec([0,1])}
+ACT_PREPROCESSORS = {}
+
 
 def make_mlp_class(model_arg, is_recurrent, args):
   """ Returns (partial) MLP class with args from args set. """
@@ -50,7 +54,8 @@ def get_train_parser(base_parser):
   base_parser.add_argument("--recurrent-policy", type=bool, default=False)
   base_parser.add_argument("--recurrent-value", type=bool, default=False)
   base_parser.add_argument("--tol", type=float, default=1e-3)
-  base_parser.add_argument("--save_weights", type=bool, default=True)
+  base_parser.add_argument("--save-weights", type=bool, default=True)
+  base_parser.add_argument("--obs-preprocessors", type=str, default='')
   return base_parser
 
 def eval_parser():
@@ -93,3 +98,19 @@ def parse_arg_archive(args_path):
         run_args[el[0]] = bool(el[1])
   run_args = SimpleNamespace(**run_args)
   return run_args
+
+def parse_process_obs(arg):
+  processors = []
+  for a in arg.split(','):
+    if a not in OBS_PREPROCESSORS.keys():
+      raise Exception("Invalid argumenst for obs preprocessor: {}".format(a))
+    processors.append(OBS_PREPROCESSORS[a])
+  return processors
+
+def parse_process_abs(arg):
+  processors = []
+  for a in arg.split(','):
+    if a not in ACT_PREPROCESSORS.keys:
+      raise Exception("Invalid argumenst for act preprocessor: {}".format(a))
+    processors.append(ACT_PREPROCESSORS[a])
+  return processors

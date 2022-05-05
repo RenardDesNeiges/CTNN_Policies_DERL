@@ -3,13 +3,17 @@
 import tensorflow as tf
 import derl
 from models import ContinuousActorCriticModel
-from utils import make_mlp_class, get_train_parser, ACCEPTED_MODELS
+from utils import make_mlp_class, get_train_parser, ACCEPTED_MODELS, parse_process_obs
 tf.enable_eager_execution()
+from preprocessing import ProcessEnv, Mask_vec
+
+
 
 
 def main():
   """ Entrance point. """
   parser = get_train_parser(derl.get_parser(derl.PPOLearner.get_defaults("mujoco")))
+  
   args = derl.log_args(parser.parse_args())
 
   if args.policy_net not in ACCEPTED_MODELS:
@@ -17,7 +21,8 @@ def main():
   if args.value_net not in ACCEPTED_MODELS:
     raise Exception('Value net argument "{}" not in accepted models ({})'.format(args.value_net, ACCEPTED_MODELS))
   
-  env = derl.env.make(args.env_id)
+  p_obs = parse_process_obs(args.obs_preprocessors)
+  env = ProcessEnv(derl.env.make(args.env_id),process_obs=p_obs)
   env.seed(args.seed)
   policy = make_mlp_class(args.policy_net, args.recurrent_policy, args)(env.action_space.shape[0])
   value = make_mlp_class(args.value_net, args.recurrent_value, args)(1)

@@ -52,35 +52,17 @@ Walker2d-v3
 ## Todo-list
 
 **Done**
-* Implement saving of policies
-* Implement evaluation code of pre-trained policies
-* Write visualization code to output 
-  * rendering of the experiments
-* Recurrent Policies
-  * Stateful models
-  * Env support
-  * PPO support
-* Debug
-  * Add action variance measurements to log
-  * Fix the non-recurrent node/ltc/ctrnn class not working with the framework modifications
-  * Make the eval runner work with the recurrent policies
-* Implement a recurrent CT-RNN model
-* Implement a recurrent Liquid Time-Constant Neural network model
-* Write visualization code to
-  * internal state evolution of the RNNs
-* Cleanup
-  * Have a unique make_mlp_class() function for eval and run
 * SLURM python wrapper
 * Task scheduler for experiments
+* Write environment masking/noise preprocessing class
 
 **Todo**
+* cleanup the SLURM wrapper
 * Debug
   * Make the MLP class work with the framework modifications
-  * Make the slurm wrapper output SLURM log files
-* Write environment masking preprocessing class
 * Write visualization code to output 
+  * Per neuron phase-space plots
   * videos of the experiments
-  * plot network topology
 * Run experiments on 
   * more complex gym environments
   * NODE/CT-RNN/LTC convergence
