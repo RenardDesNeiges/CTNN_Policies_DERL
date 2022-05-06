@@ -101,7 +101,7 @@ def parse_arg_archive(args_path):
 
 def parse_process_obs(arg):
   processors = []
-  if arg == []:
+  if arg == '':
     return processors
   for a in arg.split(','):
     if a not in OBS_PREPROCESSORS.keys():
@@ -111,7 +111,7 @@ def parse_process_obs(arg):
 
 def parse_process_abs(arg):
   processors = []
-  if arg == []:
+  if arg == '':
     return processors
   for a in arg.split(','):
     if a not in ACT_PREPROCESSORS.keys:

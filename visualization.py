@@ -29,29 +29,34 @@ def plot_ltc_cell(obs,act,states, policy_object, node_size=400, _cmap = 'RdBu'):
         G = nx.DiGraph(directed=True)
         time_constant = policy_object.model.policy.weights[6].numpy()[0,:]
         
+        in_weights = policy_object.model.policy.weights[0].numpy()
+        ltc_weights = policy_object.model.policy.weights[2].numpy()
+        out_weights = policy_object.model.policy.weights[4].numpy()
+        
         for i in range(hidden):
             n = 'h{}'.format(i)
             G.add_node(n, weight=time_constant[i])
         for i in range(hidden):
             for j in range(hidden):
-                G.add_edge('h{}'.format(i),'h{}'.format(j), weight = time_constant[i,j])  
+                G.add_edge('h{}'.format(i),'h{}'.format(j), weight = ltc_weights[i,j])  
         
         pos = nx.shell_layout(G)
         
         for i in range(inputs):
             n = 'in{}'.format(i)
-            G.add_node(n, weight=obs[i])
+            G.add_node(n, weight=0)
             pos[n] = np.array([-2,  i/((inputs+2)/2) - 0.5 ])
         for i in range(outputs):
             n = 'out{}'.format(i)
-            G.add_node(n, weight=act[i])
+            G.add_node(n, weight=0)
             pos[n] = np.array([2,  i/(outputs/2) ])
         
         for i in range(inputs):
             for j in range(hidden):
-                G.add_edge('in{}'.format(i),'h{}'.format(j), weight = 0)  
+                G.add_edge('in{}'.format(i),'h{}'.format(j), weight = in_weights[i,j])  
+        for i in range(hidden):
             for j in range(outputs):
-                G.add_edge('h{}'.format(i),'out{}'.format(j), weight = 0)  
+                G.add_edge('h{}'.format(i),'out{}'.format(j), weight = out_weights[i,j])  
                 
         return G, pos
 
