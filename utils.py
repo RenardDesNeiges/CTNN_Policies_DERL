@@ -2,8 +2,9 @@
 
 from functools import partial
 from models import ODEMLP, MLP, CTRNN, LTC
-from preprocessing import Mask_vec
+from preprocessing import Mask_vec, LQR_rew
 from types import SimpleNamespace
+import numpy as np
 import argparse
 
 ACCEPTED_MODELS = ['mlp','node','ctrnn','ltc']
@@ -11,6 +12,7 @@ INT_ARGS = ["seed", "hidden_units", "num_input_layers", "num_dynamics_layers", "
 FLOAT_ARGS = ["tol","cliprange","entropy_coef","gamma","lambda_","lr","max_grad_norm","num_train_steps","optimizer_epsilon","value_loss_coef"]
 BOOL_ARGS = ["save_weights",'recurrent_policy', 'recurrent_value']
 OBS_PREPROCESSORS = {'invPendulumNoVelocity': Mask_vec([0,1])}
+REWARD_FUNCTIONS = {'invPendulumEnergyPenalty': LQR_rew(e=np.array([0.2]),q=np.array([0.01,0.01,0.,0.]))}
 ACT_PREPROCESSORS = {}
 
 
@@ -56,6 +58,8 @@ def get_train_parser(base_parser):
   base_parser.add_argument("--tol", type=float, default=1e-3)
   base_parser.add_argument("--save-weights", type=bool, default=True)
   base_parser.add_argument("--obs-preprocessors", type=str, default='')
+  base_parser.add_argument("--act-preprocessors", type=str, default='')
+  base_parser.add_argument("--reward-function", type=str, default='')
   return base_parser
 
 def eval_parser():
@@ -114,7 +118,14 @@ def parse_process_abs(arg):
   if arg == '':
     return processors
   for a in arg.split(','):
-    if a not in ACT_PREPROCESSORS.keys:
+    if a not in ACT_PREPROCESSORS.keys():
       raise Exception("Invalid argumenst for act preprocessor: {}".format(a))
     processors.append(ACT_PREPROCESSORS[a])
   return processors
+
+def parse_reward_fun(arg):
+  if arg == '':
+    return None
+  if arg not in REWARD_FUNCTIONS.keys():
+    raise Exception("Invalid argumenst for reward function: {}".format(a))
+  return REWARD_FUNCTIONS[arg]
