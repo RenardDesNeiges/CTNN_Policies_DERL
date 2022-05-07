@@ -29,8 +29,8 @@ class ConfigParser():
             if args.max_time > 2:
                 raise Exception("MAX TIME = {} > 2h, which is the max time limit for the dev node".format(args.nodes))
         elif args.node == "prod":
-            args.cpu = 24
-            args.mem = 22
+            args.cpu = 40
+            args.mem = 30
             if args.max_time > 10:
                 raise Exception("MAX TIME = {} > 10h, which is the max time limit for the prod node".format(args.nodes))
         else:   
@@ -45,16 +45,23 @@ class Schedueler():
     @staticmethod
     def _create_output_folder(_jobname):
         datestr = datetime.now().strftime("%m%d%H%M")
-        foldername = "/home/renard/Documents/experiments/R_{}_{}".format(_jobname,datestr)
+        foldername = "/home/renard/Documents/experiments/{}_{}".format(_jobname,datestr)
         print("Created {} folder".format(foldername))
         os.mkdir(foldername)
         return foldername
 
     """ Generating the sbatch script """
     @staticmethod
-    def _slurm_head(_foldername,cpu,mem,_jobname,_max_time):
+    def _slurm_head(_foldername,args):
 
-        logpath = "{}/{}.out".format(_foldername,_jobname)
+        head_args = (
+            args.jobname,
+            "{}/{}.out".format(_foldername,args.jobname),
+            args.node,
+            args.cpu,
+            args.mem,
+            args.max_time
+        )
 
         header =  \
         "#!/bin/bash \n\
@@ -65,17 +72,16 @@ class Schedueler():
         \n#SBATCH --mem={}GB\
         \n#SBATCH --nodes=1\
         \n#SBATCH --tasks-per-node=1\
-        \n#SBATCH --time={}:00:00 \n\n".format(_jobname,logpath,NODE,cpu,mem,_max_time)
+        \n#SBATCH --time={}:00:00 \n\n".format(*head_args)
         return header
 
     """ Writing the sbatch script """
     @staticmethod
-    def _sbatch(header, start_runs, foldername, _sbatch_name):
+    def _sbatch(header, start_run, foldername, _sbatch_name):
         print("writing sbatch script")
         # create the shell script
         sbatch_script = header
-        for run in start_runs:
-            sbatch_script += run
+        sbatch_script += start_run
 
         script_path = "{}/{}".format(foldername,_sbatch_name)
         sbatch_script_file = open(script_path,"x")
@@ -89,6 +95,28 @@ class Schedueler():
     def _def_args(argdict):
         arguments = ''
         for key in argdict:
-            arguments += (key + ' ' + argdict[key] + ' ')
+            arguments += (key + ' ' + str(argdict[key]) + ' ')
 
         return arguments
+
+    """ Write script arguments dict to string """
+    @staticmethod
+    def run_slurm(config, _py_path, _local_folder):
+
+        foldername = Schedueler._create_output_folder(config.jobname)
+
+        print("Copying the script file for tracability")
+        os.system('cp {} {}/archive_{}'.format(config.script,foldername,config.script)) 
+
+        header = Schedueler._slurm_head(foldername,config)
+        
+        start_run = ''
+        for keys in config.run_args:
+            arguments = Schedueler._def_args(config.run_args[keys])
+            _buffer = foldername+'/'+keys+'.txt'
+            start_run += "{} -u {}/{} {} > {} \n".format(_py_path,_local_folder,config.script,arguments,_buffer)
+
+        script_path = Schedueler._sbatch(header, start_run, foldername, config.sbatch_name)
+
+        print("running slurm")
+        os.system("sbatch {}".format(script_path))
