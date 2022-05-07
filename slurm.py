@@ -1,11 +1,12 @@
 from yaml import load
 import os
 from datetime import datetime
+from types import SimpleNamespace
 
 class ConfigParser():
     @staticmethod
-    def load(address):
-        
+    def _load_yaml(address):
+        # _config = ConfigParser.load('experiments/inverted_pendulum_LQR.yaml')
         try:
             from yaml import CLoader as Loader
         except ImportError:
@@ -14,9 +15,28 @@ class ConfigParser():
         stream = open(address, 'rt')
 
         return load(stream.read(), Loader)
-
-_config = ConfigParser.load('experiments/inverted_pendulum_LQR.yaml')
-print(_config)
+    
+    @staticmethod
+    def load_config(address):
+        yaml_dict = ConfigParser._load_yaml(address)
+        args = SimpleNamespace(**yaml_dict)
+        for key in args.run_args.keys():
+            args.run_args[key] = {'--'+k:v for (k,v) in args.run_args[key].items()}
+        
+        if args.node == "dev":
+            args.cpu = 24
+            args.mem = 22
+            if args.max_time > 2:
+                raise Exception("MAX TIME = {} > 2h, which is the max time limit for the dev node".format(args.nodes))
+        elif args.node == "prod":
+            args.cpu = 24
+            args.mem = 22
+            if args.max_time > 10:
+                raise Exception("MAX TIME = {} > 10h, which is the max time limit for the prod node".format(args.nodes))
+        else:   
+            raise Exception("Invalid node type : {}".format(args.nodes))
+        
+        return args
 
 
 """ Write a slurm shell script and run it, save logs in an archive folder """

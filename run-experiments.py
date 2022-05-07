@@ -31,18 +31,7 @@ env_dicts = [ {**argdict,
               '--env-id': 'Swimmer-v3',
               '--logdir': 'logdir/ltc/Swimmer',}, ]
 
-if NODE == "dev":
-    cpu = 24
-    mem = 22
-    if MAX_TIME > 2:
-      raise Exception("MAX TIME = {} > 2h, which is the max time limit for the dev node".format(NODE))
-elif NODE == "prod":
-    cpu = 24
-    mem = 22
-    if MAX_TIME > 10:
-      raise Exception("MAX TIME = {} > 10h, which is the max time limit for the prod node".format(NODE))
-else:   
-    raise Exception("Invalid node type : {}".format(NODE))
+
 
 foldername = Schedueler.create_output_folder(JOBNAME)
 

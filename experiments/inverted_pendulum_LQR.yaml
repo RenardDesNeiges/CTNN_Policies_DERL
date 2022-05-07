@@ -1,5 +1,5 @@
 node: prod
-max-time: 10
+max_time: 10
 script: run-mujoco.py
 sbatch_name: run-cluster.sh
 parallelize: False

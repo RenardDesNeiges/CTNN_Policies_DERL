@@ -5,7 +5,7 @@ import derl
 from models import ContinuousActorCriticModel
 from utils import make_mlp_class, get_train_parser, ACCEPTED_MODELS, parse_process_obs, parse_reward_fun
 tf.enable_eager_execution()
-from preprocessing import ProcessEnv, Mask_vec
+from preprocessing import ProcessEnv
 
 
 
