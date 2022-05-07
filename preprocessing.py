@@ -11,7 +11,6 @@ class ProcessEnv(Wrapper):
     self.process_act = process_act
     self.reward_function = reward_function
 
-  # TODO reward computation in the process env
   def step(self, act):
     for process in self.process_act:
       act = process(act)

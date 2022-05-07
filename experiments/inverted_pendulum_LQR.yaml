@@ -1,0 +1,14 @@
+node: prod
+max-time: 10
+script: run-mujoco.py
+sbatch_name: run-cluster.sh
+parallelize: False
+run_args:
+  ltc_ppo:
+    num-train-steps: 400000
+    policy-net: ltc
+    value-net: ltc
+    recurrent-policy: True
+    recurrent-value: True
+    env-id: InvertedPendulum-v2
+    logdir: logdir/ltc/InvertedPendulum
