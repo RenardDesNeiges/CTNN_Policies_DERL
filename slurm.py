@@ -58,8 +58,9 @@ class Schedueler():
             args.jobname,
             "{}/{}.out".format(_foldername,args.jobname),
             args.node,
-            args.cpu,
+            args.cpu//len(args.run_args.keys()),
             args.mem,
+            len(args.run_args.keys()), # tasks per node
             args.max_time
         )
 
@@ -71,7 +72,7 @@ class Schedueler():
         \n#SBATCH --cpus-per-task={}\
         \n#SBATCH --mem={}GB\
         \n#SBATCH --nodes=1\
-        \n#SBATCH --tasks-per-node=1\
+        \n#SBATCH --tasks-per-node={}\
         \n#SBATCH --time={}:00:00 \n\n".format(*head_args)
         return header
 
@@ -82,6 +83,7 @@ class Schedueler():
         # create the shell script
         sbatch_script = header
         sbatch_script += start_run
+        sbatch_script += 'wait\n'
 
         script_path = "{}/{}".format(foldername,_sbatch_name)
         sbatch_script_file = open(script_path,"x")
@@ -114,7 +116,7 @@ class Schedueler():
         for keys in config.run_args:
             arguments = Schedueler._def_args(config.run_args[keys])
             _buffer = foldername+'/'+keys+'.txt'
-            start_run += "{} -u {}/{} {} > {} \n".format(_py_path,_local_folder,config.script,arguments,_buffer)
+            start_run += "srun {} -u {}/{} {} > {} & \n".format(_py_path,_local_folder,config.script,arguments,_buffer)
 
         script_path = Schedueler._sbatch(header, start_run, foldername, config.sbatch_name)
 

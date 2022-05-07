@@ -13,9 +13,6 @@ args = parser.parse_args()
 
 
 ################ Train parameters
-
-# YAML_ADRESS = 'experiments/inverted_pendulum_LQR.yaml'
-
 config = ConfigParser.load_config(args.config)
 Schedueler.run_slurm(config, PYTHON_VERSION, PROJECT_FOLDER)
 
