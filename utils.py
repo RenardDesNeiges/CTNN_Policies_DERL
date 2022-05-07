@@ -12,7 +12,8 @@ INT_ARGS = ["seed", "hidden_units", "num_input_layers", "num_dynamics_layers", "
 FLOAT_ARGS = ["tol","cliprange","entropy_coef","gamma","lambda_","lr","max_grad_norm","num_train_steps","optimizer_epsilon","value_loss_coef"]
 BOOL_ARGS = ["save_weights",'recurrent_policy', 'recurrent_value']
 OBS_PREPROCESSORS = {'invPendulumNoVelocity': Mask_vec([0,1])}
-REWARD_FUNCTIONS = {'invPendulumEnergyPenalty': LQR_rew(e=np.array([0.2]),q=np.array([0.01,0.01,0.,0.]))}
+REWARD_FUNCTIONS = {'invPendulumEnergyPenalty': LQR_rew(e=np.array([0.2])),
+                    'invPendulumEnergyPosition': LQR_rew(e=np.array([0.2]),q=np.array([0.05,0.,0.,0.])),}
 ACT_PREPROCESSORS = {}
 
 
