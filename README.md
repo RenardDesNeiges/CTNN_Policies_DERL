@@ -58,7 +58,6 @@ Walker2d-v3
 **Todo**
 * arguments documentation in the readme
 * multi-processing training
-* cleanup the SLURM wrapper
 * Debug
   * Make the MLP class work with the framework modifications
 * Write visualization code to output 

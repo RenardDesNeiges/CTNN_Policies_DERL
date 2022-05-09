@@ -94,10 +94,13 @@ class Schedueler():
 
     """ Write script arguments dict to string """
     @staticmethod
-    def _def_args(argdict):
+    def _def_args(argdict,path):
         arguments = ''
         for key in argdict:
-            arguments += (key + ' ' + str(argdict[key]) + ' ')
+            if key == '--logdir':
+                arguments += (key + ' ' + path + '/' + str(argdict[key]) + ' ')
+            else:
+                arguments += (key + ' ' + str(argdict[key]) + ' ')
 
         return arguments
 
@@ -114,7 +117,7 @@ class Schedueler():
         
         start_run = ''
         for keys in config.run_args:
-            arguments = Schedueler._def_args(config.run_args[keys])
+            arguments = Schedueler._def_args(config.run_args[keys],foldername)
             _buffer = foldername+'/'+keys+'.txt'
             start_run += "srun {} -u {}/{} {} > {} & \n".format(_py_path,_local_folder,config.script,arguments,_buffer)
 
