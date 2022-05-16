@@ -276,7 +276,6 @@ class LTC(ODEModel):
     return out, hidden
 
 class ContinuousActorCriticModel(tf.keras.Model):
-  #TODO recurrent support
   """ Adds variance variable to policy and value models to create new model. """
   def __init__(self, input_shape, action_dim, policy, value, logstd=None):
     super().__init__()
