@@ -1,8 +1,13 @@
 """ RL env runner """
 from collections import defaultdict
-from matplotlib.pyplot import plot
+from multiprocessing import Pool
+from .multiprocessing_runner import get_trajectory, stack_trajectories
+from copy import deepcopy
 import numpy as np
 import random
+import os
+
+TRAJECTORY_ELEMENTS = ['actions', 'log_prob', 'values', 'observations', 'rewards', 'resets', 'advantages', 'value_targets', 'policy_states', 'value_states']
 
 from .base import BaseRunner
 from .trajectory_transforms import (
@@ -31,6 +36,7 @@ class EnvRunner(BaseRunner):
 
   def get_next(self):
     """ Runs the agent in the environment.  """
+    
     trajectory = defaultdict(list, {"actions": []})
     observations = []
     rewards = []
@@ -84,18 +90,20 @@ class EnvRunner(BaseRunner):
               f"cannot convert value under key '{key}' to np.ndarray")
     trajectory.update(states=state_to_array(states))
     trajectory["state"] = self.state
-
+    
     for transform in self.transforms:
       transform(trajectory)
+      
     return trajectory
 
 
 class TrajectorySampler(BaseRunner):
   """ Samples parts of trajectory for specified number of epochs. """
   def __init__(self, runner, num_epochs=4, num_minibatches=4,
-               shuffle_before_epoch=True, transforms=None):
+               shuffle_before_epoch=True, transforms=None, workers = 4):
     super().__init__(runner.env, runner.policy, runner.step_var)
     self.runner = runner
+    self.workers = workers
     self.num_epochs = num_epochs
     self.num_minibatches = num_minibatches
     self.shuffle_before_epoch = shuffle_before_epoch
@@ -103,7 +111,7 @@ class TrajectorySampler(BaseRunner):
     self.minibatch_count = 0
     self.epoch_count = 0
     self.trajectory = None
-
+    self.init = False
   def trajectory_is_stale(self):
     """ True iff new trajectory should be generated for sub-sampling. """
     return self.epoch_count >= self.num_epochs
@@ -117,10 +125,29 @@ class TrajectorySampler(BaseRunner):
       self.trajectory[key] = val[indices]
 
   def get_next(self):
-    # TODO : support recurrent policies
+    
     if self.trajectory is None or self.trajectory_is_stale():
       self.epoch_count = self.minibatch_count = 0
-      self.trajectory = self.runner.get_next()
+
+
+      if self.workers > 1:
+        if not self.init:
+          _ = self.runner.policy.act(self.env.reset(),state=self.policy.get_state())
+          self.runner.policy.model.save_weights(os.path.join(self.logdir, "model"))
+          self.init = True
+          
+        _seeds = [random.randint(0,int(1e6)) for _ in range(self.workers)]
+        _inmap = [(s,deepcopy(self.env), self.logdir, []) for s in _seeds]
+        
+        with Pool(self.workers) as p:
+          trajectories = p.starmap(get_trajectory, _inmap) 
+        self.step_var.assign_add(self.runner.nsteps*self.workers)  
+        
+        self.trajectory = stack_trajectories(trajectories)
+        
+      else:
+        self.trajectory = self.runner.get_next()
+      
       if self.shuffle_before_epoch:
         self.shuffle_trajectory()
 
@@ -160,7 +187,6 @@ def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
   return runner
 
 class EvalRunner(EnvRunner):
-  
   def __init__(self, env, policy, nsteps, render=False):
     super().__init__(env, policy, nsteps, cutoff=False,
                asarray=True, transforms=None, step_var=None)
@@ -172,8 +198,6 @@ class EvalRunner(EnvRunner):
     if self.render:
       self.env.render()
     
-    rand = random.randint(0,20000)
-    print(rand)
     self.env.seed(random.randint(0,20000))
     if n_steps is None:
       n_steps = self.nsteps
@@ -213,7 +237,7 @@ class EvalRunner(EnvRunner):
       # Only reset if the env is not batched. Batched envs should auto-reset.
       if not self.nenvs and np.all(done):
         self.state["env_steps"] = i + 1
-        self.env.seed(rand)
+        self.env.seed(random.randint(0,20000))
         self.state["latest_observation"] = self.env.reset()
         if self.policy.is_recurrent():
           self.state["policy_state"] = self.policy.get_state()

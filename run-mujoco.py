@@ -30,7 +30,7 @@ def main():
                                      env.action_space.shape[0],
                                      policy, value)
 
-  learner = derl.PPOLearner.from_env_args(env, args, model=model)
+  learner = derl.PPOLearner.from_env_args(env, args, model=model, logdir=args.logdir)
   learner.learn(args.num_train_steps, args.logdir, args.log_period)
 
 

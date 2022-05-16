@@ -56,7 +56,6 @@ class BaseAlgorithm(ABC):
 
   def step(self, data):
     """ Performs single training step of the algorithm. """
-    # TODO : implement recurrent policy support
     with tf.GradientTape() as tape:
       loss = self.loss(data)
     gradients = self.preprocess_gradients(
@@ -96,9 +95,10 @@ class Learner:
     return self.alg.model
 
   @classmethod
-  def from_env_args(cls, env, args, model=None, save_weights=True):
+  def from_env_args(cls, env, args, model=None, save_weights=True, logdir = None):
     """ Creates a learner instance from environment and args namespace. """
     runner = cls.make_runner(env, args, model=model)
+    runner.logdir = logdir
     learner = cls(runner, cls.make_alg(runner, args))
     learner.save_weights = save_weights
     return learner
@@ -138,4 +138,3 @@ class Learner:
 
     for _ in self.learning_generator(nsteps, logdir, log_period):
       pass
-
