@@ -137,7 +137,7 @@ class TrajectorySampler(BaseRunner):
           self.init = True
           
         _seeds = [random.randint(0,int(1e6)) for _ in range(self.workers)]
-        _inmap = [(s,deepcopy(self.env), self.logdir, []) for s in _seeds]
+        _inmap = [(s,deepcopy(self.env), self.logdir, [],self.runner.nsteps//self.workers) for s in _seeds]
         
         with Pool(self.workers) as p:
           trajectories = p.starmap(get_trajectory, _inmap) 

@@ -8,7 +8,7 @@ from .trajectory_transforms import (GAE)
 
 State = namedtuple("State", "policy value")
 
-def get_trajectory(seed, env, logdir, transforms):
+def get_trajectory(seed, env, logdir, transforms, _nsteps):
   
   parser = eval_parser()  
   run_args = parse_arg_archive(logdir + '/args.txt')
@@ -24,7 +24,7 @@ def get_trajectory(seed, env, logdir, transforms):
   policy_object = ActorCriticPolicy(model)
   
   transforms.append(GAE(policy_object, gamma=run_args.gamma, lambda_=run_args.lambda_, normalize=False))
-  trajectory = get_next(policy_object, env, run_args.num_runner_steps, transforms)
+  trajectory = get_next(policy_object, env, _nsteps, transforms)
   
   return trajectory
 
