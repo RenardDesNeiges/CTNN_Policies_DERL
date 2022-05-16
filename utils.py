@@ -13,7 +13,7 @@ FLOAT_ARGS = ["tol","cliprange","entropy_coef","gamma","lambda_","lr","max_grad_
 BOOL_ARGS = ["save_weights",'recurrent_policy', 'recurrent_value']
 OBS_PREPROCESSORS = {'invPendulumNoVelocity': Mask_vec([0,1])}
 REWARD_FUNCTIONS = {'invPendulumEnergyPenalty': LQR_rew(e=np.array([0.2])),
-                    'invPendulumEnergyPosition': LQR_rew(e=np.array([0.2]),q=np.array([0.005,0.,0.,0.])),}
+                    'invPendulumEnergyPosition': LQR_rew(e=np.array([0.2]),q=np.array([0.001,0.,0.,0.])),}
 ACT_PREPROCESSORS = {}
 
 

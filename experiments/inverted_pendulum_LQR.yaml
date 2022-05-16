@@ -3,12 +3,12 @@ max_time: 10
 script: run-mujoco.py
 sbatch_name: run-cluster.sh
 parallelize: False
-jobname: invPendulumEnergyPosition
+jobname: invPendulumEnergyPenalty
 run_args:
   invPendulumEnergyPosition_ltc:
     num-train-steps: 400000
     lr: 2e-4
-    reward-function: invPendulumEnergyPosition
+    reward-function: invPendulumEnergyPenalty
     hidden-units: 8
     policy-net: ltc
     value-net: ltc
