@@ -176,7 +176,7 @@ class TrajectorySampler(BaseRunner):
 
 
 def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
-                    num_epochs=3, num_minibatches=4):
+                    num_epochs=3, num_minibatches=4, nenvs=4):
   """ Returns env runner for PPO """
   transforms = [GAE(policy, gamma=gamma, lambda_=lambda_, normalize=False)]
   if not policy.is_recurrent() and getattr(env.unwrapped, "nenvs", None):
@@ -185,7 +185,8 @@ def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
   runner = TrajectorySampler(runner, num_epochs=num_epochs,
                              num_minibatches=num_minibatches,
                              shuffle_before_epoch=(not policy.is_recurrent()),
-                             transforms=[NormalizeAdvantages()])
+                             transforms=[NormalizeAdvantages()],
+                             workers=nenvs)
   return runner
 
 class EvalRunner(EnvRunner):

@@ -1,4 +1,5 @@
 """ Implements PPO Learner. """
+import time
 import tensorflow as tf
 from derl.base import Learner
 from derl.models import make_model
@@ -54,7 +55,7 @@ class PPOLearner(Learner):
     policy = ActorCriticPolicy(model)
     kwargs = vars(args)
     runner_kwargs = {key: kwargs[key] for key in
-                     ["gamma", "lambda_", "num_epochs", "num_minibatches"]
+                     ["gamma", "lambda_", "num_epochs", "num_minibatches", "nenvs"]
                      if key in kwargs}
     runner = make_ppo_runner(env, policy, args.num_runner_steps,
                              **runner_kwargs)
@@ -78,7 +79,10 @@ class PPOLearner(Learner):
     return ppo
 
   def learning_body(self):
-    data = self.runner.get_next()
+    
+    data = self.runner.get_next() # TODO : time that call as "sample"
+    
+    # TODO : time the rest as "train"
     loss = self.alg.step(data)
     yield data, loss
     while not self.runner.trajectory_is_stale():

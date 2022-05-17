@@ -70,6 +70,7 @@ class AsyncRewardSummarizer:
   def __init__(self, nenvs, prefix, running_mean_size=100, step_var=None):
     self.prefix = prefix
     self.reward_queue = deque([], maxlen=running_mean_size) #queue the rewards for 100 mean reward
+    self.global_step = 0
 
   def should_add_summaries(self):
     """ Returns `True` if it is time to write summaries. """
@@ -97,18 +98,14 @@ class AsyncRewardSummarizer:
     for _step in range(trajectory['rewards'].shape[0]):
       if trajectory['resets'][_step]:
         self.reward_queue.append(reward)
-        self.add_summary(reward, ep_len, _step)
+        self.add_summary(reward, ep_len, _step + self.global_step)
         reward = 0
         ep_len = 0
       else:
         reward += trajectory['rewards'][_step]
         ep_len += 1
-
-  def reset(self):
-    """ Resets summarization-related statistics. """
-    self.rewards.fill(0)
-    self.episode_lengths.fill(0)
-    self.had_ended_episodes.fill(False)
+         
+    self.global_step += trajectory['rewards'].shape[0]
 
 
 class Summarize(Wrapper):
@@ -142,3 +139,12 @@ class Summarize(Wrapper):
   def reset(self, **kwargs):
     self.summarizer.reset()
     return self.env.reset(**kwargs)
+
+class ProfileToTB():
+  def __init__(self,):
+    # TODO : instanciate a timer :)
+    pass
+  
+  def time_call(function, input):
+    # TODO : call the function, pass the output to the return, time it :)
+    pass
