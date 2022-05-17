@@ -53,11 +53,10 @@ Walker2d-v3
 * Task scheduler for experiments
 * Write environment masking/noise preprocessing class
 * Energy terms and custom reward
-
+* multi-processing training & logging
 
 **Todo**
 * arguments documentation in the readme
-* multi-processing training
 * Debug
   * Make the MLP class work with the framework modifications
 * Write visualization code to output 

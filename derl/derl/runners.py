@@ -1,13 +1,12 @@
 """ RL env runner """
 from collections import defaultdict
 from multiprocessing import Pool
-from .multiprocessing_runner import get_trajectory, stack_trajectories
+from .env.summarize import AsyncRewardSummarizer
+from .multiprocessing_runner import get_trajectory, stack_trajectories, summarize_traj
 from copy import deepcopy
 import numpy as np
 import random
 import os
-
-TRAJECTORY_ELEMENTS = ['actions', 'log_prob', 'values', 'observations', 'rewards', 'resets', 'advantages', 'value_targets', 'policy_states', 'value_states']
 
 from .base import BaseRunner
 from .trajectory_transforms import (
@@ -104,6 +103,8 @@ class TrajectorySampler(BaseRunner):
     super().__init__(runner.env, runner.policy, runner.step_var)
     self.runner = runner
     self.workers = workers
+    if workers > 1:
+      self.summarizer = AsyncRewardSummarizer(1, 'rewards')
     self.num_epochs = num_epochs
     self.num_minibatches = num_minibatches
     self.shuffle_before_epoch = shuffle_before_epoch
@@ -144,6 +145,7 @@ class TrajectorySampler(BaseRunner):
         self.step_var.assign_add(self.runner.nsteps*self.workers)  
         
         self.trajectory = stack_trajectories(trajectories)
+        self.summarizer.add_traj(self.trajectory)
         
       else:
         self.trajectory = self.runner.get_next()
@@ -174,7 +176,7 @@ class TrajectorySampler(BaseRunner):
 
 
 def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
-                    num_epochs=3, num_minibatches=4):
+                    num_epochs=3, num_minibatches=4, nenvs=4):
   """ Returns env runner for PPO """
   transforms = [GAE(policy, gamma=gamma, lambda_=lambda_, normalize=False)]
   if not policy.is_recurrent() and getattr(env.unwrapped, "nenvs", None):
@@ -183,7 +185,8 @@ def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
   runner = TrajectorySampler(runner, num_epochs=num_epochs,
                              num_minibatches=num_minibatches,
                              shuffle_before_epoch=(not policy.is_recurrent()),
-                             transforms=[NormalizeAdvantages()])
+                             transforms=[NormalizeAdvantages()],
+                             workers=nenvs)
   return runner
 
 class EvalRunner(EnvRunner):
