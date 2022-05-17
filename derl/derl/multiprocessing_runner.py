@@ -20,7 +20,10 @@ def get_trajectory(seed, env, logdir, transforms, _nsteps):
   model = ContinuousActorCriticModel(env.observation_space.shape,
                                      env.action_space.shape[0],
                                      policy, value)
-  model.load_weights(logdir+'/model') # load the weights from the logged policy
+  if logdir[-1] == '/':
+    model.load_weights(logdir+'model') # load the weights from the logged policy
+  else:
+    model.load_weights(logdir+'/model') # load the weights from the logged policy
   policy_object = ActorCriticPolicy(model)
   
   transforms.append(GAE(policy_object, gamma=run_args.gamma, lambda_=run_args.lambda_, normalize=False))
