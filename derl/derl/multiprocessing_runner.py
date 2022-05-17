@@ -62,14 +62,11 @@ def get_next(policy, env, nsteps, transforms):
     resets.append(done)
 
     # Only reset if the env is not batched. Batched envs should auto-reset. 
-    # TODO : do we need that? My guess is we don't
-    # if not self.nenvs and np.all(done):
-    #   self.state["env_steps"] = i + 1
-    #   self.state["latest_observation"] = self.env.reset()
-    #   if self.policy.is_recurrent():
-    #     self.state["policy_state"] = self.policy.get_state()
-    #   if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
-    #     break
+    if done:
+      state["env_steps"] = i + 1
+      state["latest_observation"] = env.reset()
+      if policy.is_recurrent():
+        state["policy_state"] = policy.get_state()
       
   def state_to_array(states):
     policies = np.array([np.array(s.policy)[0,:]for s in states]) if states[0].policy is not None else None
@@ -122,3 +119,12 @@ def stack_trajectories(_t_in):
       traj[k] = NT(**d)
       
   return traj
+
+# TODO : Remove that function
+def summarize_traj(trajectory, summarizer):
+  
+  # TODO : add the rewards from the trajectory to the summary
+  for i in range(trajectory['rewards'].shape[0]):
+    summarizer.step(trajectory['rewards'][i], trajectory['resets'][i])
+  
+  pass

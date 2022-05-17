@@ -65,6 +65,52 @@ class RewardSummarizer:
     self.had_ended_episodes.fill(False)
 
 
+class AsyncRewardSummarizer:
+  """ Summarizes rewards received from environment. """
+  def __init__(self, nenvs, prefix, running_mean_size=100, step_var=None):
+    self.prefix = prefix
+    self.reward_queue = deque([], maxlen=running_mean_size) #queue the rewards for 100 mean reward
+
+  def should_add_summaries(self):
+    """ Returns `True` if it is time to write summaries. """
+    return np.all(self.had_ended_episodes)
+
+  def add_summary(self, reward, ep_len, _step):
+    """ Writes summaries. """
+    tf.contrib.summary.scalar(
+        f"{self.prefix}/total_reward",
+        reward,
+        step=_step)
+    tf.contrib.summary.scalar(
+        f"{self.prefix}/reward_mean_{self.reward_queue.maxlen}",
+        np.mean(np.array(self.reward_queue)), 
+        step=_step)
+    tf.contrib.summary.scalar(
+        f"{self.prefix}/episode_length",
+        ep_len,
+        step=_step)
+
+  def add_traj(self, trajectory):
+    """ Takes statistics from last env step and tries to add summaries.  """
+    reward = 0
+    ep_len = 0
+    for _step in range(trajectory['rewards'].shape[0]):
+      if trajectory['resets'][_step]:
+        self.reward_queue.append(reward)
+        self.add_summary(reward, ep_len, _step)
+        reward = 0
+        ep_len = 0
+      else:
+        reward += trajectory['rewards'][_step]
+        ep_len += 1
+
+  def reset(self):
+    """ Resets summarization-related statistics. """
+    self.rewards.fill(0)
+    self.episode_lengths.fill(0)
+    self.had_ended_episodes.fill(False)
+
+
 class Summarize(Wrapper):
   """ Writes env summaries."""
   def __init__(self, env, summarizer):
