@@ -142,7 +142,7 @@ class TrajectorySampler(BaseRunner):
         
         with Pool(self.workers) as p:
           trajectories = p.starmap(get_trajectory, _inmap) 
-        self.step_var.assign_add(self.runner.nsteps*self.workers)  
+        self.step_var.assign_add(self.runner.nsteps)  
         
         self.trajectory = stack_trajectories(trajectories)
         self.summarizer.add_traj(self.trajectory)
