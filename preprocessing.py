@@ -47,19 +47,17 @@ Computes a reward as follows
     - if done     : rew = p                       < 0
 """
 class LQR_rew():
-  def __init__(self, t = 1.0, q = None, e = None, p = -2.0):
+  def __init__(self, t = 1.0, q = 0, e = 0, p = -2.0):
     self.t = t
     self.q = q
     self.e = e
     self.p = p
 
   def __call__(self, obs, rew, done, act, info):
-    if done: 
-      return self.p
+    r = np.ones_like(rew)* self.t
     
-    rew = self.t
-    if self.q is not None:
-      rew -= la.norm(self.q * obs)**2
-    if self.e is not None:
-      rew -= la.norm(self.e * act)**2
-    return rew
+    r -= la.norm(self.q * obs,axis=1)**2
+    r -= la.norm(self.e * act,axis=1)**2
+    np.put(r,np.where(done==True),self.p)
+    
+    return r

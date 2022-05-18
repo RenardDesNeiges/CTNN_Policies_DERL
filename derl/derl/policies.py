@@ -45,14 +45,14 @@ class ActorCriticPolicy(Policy):
     """ Returns current policy state."""
     return self.state
   
-  def reset(self):
-    def init_hidden_state(model):
+  def reset(self,_nenvs = 1):
+    def init_hidden_state(model, n):
       if model.is_recurrent:
-        return tf.zeros([1,model.hidden_units]) # TODO, check if there is a batch size to include
+        return tf.zeros([n,model.hidden_units]) # TODO, check if there is a batch size to include
       return None
     
-    self.state = State(init_hidden_state(self.model.value),
-                       init_hidden_state(self.model.policy))
+    self.state = State(init_hidden_state(self.model.value,_nenvs),
+                       init_hidden_state(self.model.policy,_nenvs))
 
   def act(self, inputs, state=State(None, None), update_state=True, training=False):
     _ = update_state

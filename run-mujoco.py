@@ -22,7 +22,7 @@ def main():
     raise Exception('Value net argument "{}" not in accepted models ({})'.format(args.value_net, ACCEPTED_MODELS))
   
   p_obs = parse_process_obs(args.obs_preprocessors)
-  env = ProcessEnv(derl.env.make(args.env_id, summarize=(args.nenvs<2)),process_obs=p_obs,reward_function=parse_reward_fun(args.reward_function))
+  env = ProcessEnv(derl.env.make(args.env_id, summarize=True, nenvs=args.nenvs),process_obs=p_obs,reward_function=parse_reward_fun(args.reward_function))
   env.seed(args.seed)
   policy = make_mlp_class(args.policy_net, args.recurrent_policy, args)(env.action_space.shape[0])
   value = make_mlp_class(args.value_net, args.recurrent_value, args)(1)

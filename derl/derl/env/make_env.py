@@ -133,6 +133,8 @@ def mujoco_env(env_id, nenvs=None, seed=None, summarize=True,
         lambda s=s: mujoco_env(env_id, seed=s, summarize=False,
                                normalize_obs=False, normalize_ret=False)
         for s in seed])
+    env.spec = mujoco_env(env_id,).spec
+    env._nenvs = nenvs
     return mujoco_wrap(env, summarize=summarize, normalize_obs=normalize_obs,
                        normalize_ret=normalize_ret)
 

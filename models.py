@@ -14,7 +14,7 @@ class LeakyComponent(tf.keras.layers.Layer):
   def build(self, input_shape):
     tau_init = tf.random_normal_initializer(mean=0.0, stddev=0.05)
     self.tau = tf.Variable(
-        initial_value=1-tau_init(shape=(1, input_shape[-1]),
+        initial_value=1-tau_init(shape=(input_shape[0], input_shape[1]),
                             dtype='float32'),
         trainable=True)
     self.mult = tf.keras.layers.Multiply()
@@ -34,7 +34,7 @@ class ConductanceConnectivity(tf.keras.layers.Layer):
   def build(self, input_shape):
     bias_init = tf.random_normal_initializer(mean=1.0, stddev=0.5)
     self.bias = tf.Variable(
-        initial_value=bias_init(shape=(1, input_shape[-1]),
+        initial_value=bias_init(shape=(input_shape[0], input_shape[1]),
                             dtype='float32'),
         trainable=True)
     self.add = tf.keras.layers.Add()

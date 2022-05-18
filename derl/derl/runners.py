@@ -45,6 +45,7 @@ class EnvRunner(BaseRunner):
     self.state["policy_state"] = State(None, None)
     
     if self.policy.is_recurrent():
+      self.policy.reset(self.env.nenvs)
       self.state["policy_state"] = self.policy.get_state()
 
     for i in range(self.nsteps):
@@ -70,6 +71,7 @@ class EnvRunner(BaseRunner):
         self.state["env_steps"] = i + 1
         self.state["latest_observation"] = self.env.reset()
         if self.policy.is_recurrent():
+          self.policy.reset(self.env.nenvs)
           self.state["policy_state"] = self.policy.get_state()
         if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
           break
@@ -99,12 +101,12 @@ class EnvRunner(BaseRunner):
 class TrajectorySampler(BaseRunner):
   """ Samples parts of trajectory for specified number of epochs. """
   def __init__(self, runner, num_epochs=4, num_minibatches=4,
-               shuffle_before_epoch=True, transforms=None, workers = 4):
+               shuffle_before_epoch=True, transforms=None):
     super().__init__(runner.env, runner.policy, runner.step_var)
     self.runner = runner
-    self.workers = workers
-    if workers > 1:
-      self.summarizer = AsyncRewardSummarizer(1, 'rewards')
+    # self.workers = workers
+    # if workers > 1:
+    #   self.summarizer = AsyncRewardSummarizer(1, 'rewards')
     self.num_epochs = num_epochs
     self.num_minibatches = num_minibatches
     self.shuffle_before_epoch = shuffle_before_epoch
@@ -131,24 +133,24 @@ class TrajectorySampler(BaseRunner):
       self.epoch_count = self.minibatch_count = 0
 
 
-      if self.workers > 1:
-        if not self.init:
-          _ = self.runner.policy.act(self.env.reset(),state=self.policy.get_state())
-          self.init = True
+      # if self.workers > 1:
+      #   if not self.init:
+      #     _ = self.runner.policy.act(self.env.reset(),state=self.policy.get_state())
+      #     self.init = True
           
-        _seeds = [random.randint(0,int(1e6)) for _ in range(self.workers)]
-        _inmap = [(s,deepcopy(self.env), self.logdir, [],self.runner.nsteps//self.workers) for s in _seeds]
+      #   _seeds = [random.randint(0,int(1e6)) for _ in range(self.workers)]
+      #   _inmap = [(s,deepcopy(self.env), self.logdir, [],self.runner.nsteps//self.workers) for s in _seeds]
         
-        self.runner.policy.model.save_weights(os.path.join(self.logdir, "model"))
-        with Pool(self.workers) as p:
-          trajectories = p.starmap(get_trajectory, _inmap) 
-        self.step_var.assign_add(self.runner.nsteps)  
+      #   self.runner.policy.model.save_weights(os.path.join(self.logdir, "model"))
+      #   with Pool(self.workers) as p:
+      #     trajectories = p.starmap(get_trajectory, _inmap) 
+      #   self.step_var.assign_add(self.runner.nsteps)  
         
-        self.trajectory = stack_trajectories(trajectories)
-        self.summarizer.add_traj(self.trajectory)
+      #   self.trajectory = stack_trajectories(trajectories)
+      #   self.summarizer.add_traj(self.trajectory)
         
-      else:
-        self.trajectory = self.runner.get_next()
+      # else:
+      self.trajectory = self.runner.get_next()
       
       if self.shuffle_before_epoch:
         self.shuffle_trajectory()
@@ -176,7 +178,7 @@ class TrajectorySampler(BaseRunner):
 
 
 def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
-                    num_epochs=3, num_minibatches=4, nenvs=4):
+                    num_epochs=3, num_minibatches=4):
   """ Returns env runner for PPO """
   transforms = [GAE(policy, gamma=gamma, lambda_=lambda_, normalize=False)]
   if not policy.is_recurrent() and getattr(env.unwrapped, "nenvs", None):
@@ -185,8 +187,7 @@ def make_ppo_runner(env, policy, num_runner_steps, gamma=0.99, lambda_=0.95,
   runner = TrajectorySampler(runner, num_epochs=num_epochs,
                              num_minibatches=num_minibatches,
                              shuffle_before_epoch=(not policy.is_recurrent()),
-                             transforms=[NormalizeAdvantages()],
-                             workers=nenvs)
+                             transforms=[NormalizeAdvantages()],)
   return runner
 
 class EvalRunner(EnvRunner):
