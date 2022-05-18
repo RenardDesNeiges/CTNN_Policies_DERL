@@ -134,12 +134,12 @@ class TrajectorySampler(BaseRunner):
       if self.workers > 1:
         if not self.init:
           _ = self.runner.policy.act(self.env.reset(),state=self.policy.get_state())
-          self.runner.policy.model.save_weights(os.path.join(self.logdir, "model"))
           self.init = True
           
         _seeds = [random.randint(0,int(1e6)) for _ in range(self.workers)]
         _inmap = [(s,deepcopy(self.env), self.logdir, [],self.runner.nsteps//self.workers) for s in _seeds]
         
+        self.runner.policy.model.save_weights(os.path.join(self.logdir, "model"))
         with Pool(self.workers) as p:
           trajectories = p.starmap(get_trajectory, _inmap) 
         self.step_var.assign_add(self.runner.nsteps)  
