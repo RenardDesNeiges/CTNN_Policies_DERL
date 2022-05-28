@@ -55,7 +55,7 @@ class PPOLearner(Learner):
     policy = ActorCriticPolicy(model)
     kwargs = vars(args)
     runner_kwargs = {key: kwargs[key] for key in
-                     ["gamma", "lambda_", "num_epochs", "num_minibatches", "nenvs"]
+                     ["gamma", "lambda_", "num_epochs", "num_minibatches"]
                      if key in kwargs}
     runner = make_ppo_runner(env, policy, args.num_runner_steps,
                              **runner_kwargs)

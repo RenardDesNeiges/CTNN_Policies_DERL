@@ -77,8 +77,8 @@ class EnvRunner(BaseRunner):
           break
         
     def state_to_array(states):
-      policies = np.array([np.array(s.policy)[0,:]for s in states]) if states[0].policy is not None else None
-      values   = np.array([np.array(s.value)[0,:]for s in states]) if states[0].value is not None else None
+      policies = np.array([np.array(s.policy)[:,:]for s in states]) if states[0].policy is not None else None
+      values   = np.array([np.array(s.value)[:,:]for s in states]) if states[0].value is not None else None
       return State(policies,values)
     
     trajectory.update(observations=observations, rewards=rewards, resets=resets)
@@ -104,9 +104,9 @@ class TrajectorySampler(BaseRunner):
                shuffle_before_epoch=True, transforms=None):
     super().__init__(runner.env, runner.policy, runner.step_var)
     self.runner = runner
-    # self.workers = workers
-    # if workers > 1:
-    #   self.summarizer = AsyncRewardSummarizer(1, 'rewards')
+    self.workers = self.runner.env.nenvs
+    if self.workers > 1:
+      self.summarizer = AsyncRewardSummarizer(1, 'rewards')
     self.num_epochs = num_epochs
     self.num_minibatches = num_minibatches
     self.shuffle_before_epoch = shuffle_before_epoch
@@ -132,25 +132,24 @@ class TrajectorySampler(BaseRunner):
     if self.trajectory is None or self.trajectory_is_stale():
       self.epoch_count = self.minibatch_count = 0
 
-
-      # if self.workers > 1:
-      #   if not self.init:
-      #     _ = self.runner.policy.act(self.env.reset(),state=self.policy.get_state())
-      #     self.init = True
+      if self.workers > 1:
+        if not self.init:
+          _ = self.runner.policy.act(self.env.reset(),state=self.policy.get_state())
+          self.init = True
           
-      #   _seeds = [random.randint(0,int(1e6)) for _ in range(self.workers)]
-      #   _inmap = [(s,deepcopy(self.env), self.logdir, [],self.runner.nsteps//self.workers) for s in _seeds]
+        _seeds = [random.randint(0,int(1e6)) for _ in range(self.workers)]
+        _inmap = [(s,deepcopy(self.env), self.logdir, [],self.runner.nsteps//self.workers) for s in _seeds]
         
-      #   self.runner.policy.model.save_weights(os.path.join(self.logdir, "model"))
-      #   with Pool(self.workers) as p:
-      #     trajectories = p.starmap(get_trajectory, _inmap) 
-      #   self.step_var.assign_add(self.runner.nsteps)  
+        self.runner.policy.model.save_weights(os.path.join(self.logdir, "model"))
+        with Pool(self.workers) as p:
+          trajectories = p.starmap(get_trajectory, _inmap) 
+        self.step_var.assign_add(self.runner.nsteps)  
         
-      #   self.trajectory = stack_trajectories(trajectories)
-      #   self.summarizer.add_traj(self.trajectory)
+        self.trajectory = stack_trajectories(trajectories)
+        self.summarizer.add_traj(self.trajectory)
         
-      # else:
-      self.trajectory = self.runner.get_next()
+      else:
+        self.trajectory = self.runner.get_next()
       
       if self.shuffle_before_epoch:
         self.shuffle_trajectory()
