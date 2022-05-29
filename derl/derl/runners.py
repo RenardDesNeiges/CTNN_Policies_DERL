@@ -242,12 +242,14 @@ class EvalRunner(EnvRunner):
         self.state["env_steps"] = i + 1
         self.env.seed(random.randint(0,20000))
         self.state["latest_observation"] = self.env.reset()
+        self.policy.reset(1)
         if self.policy.is_recurrent():
           self.state["policy_state"] = self.policy.get_state()
         if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
           break
 
     self.env.reset()
+    self.policy.reset(1)
     self.env.close()
 
     trajectory.update(observations=observations, 

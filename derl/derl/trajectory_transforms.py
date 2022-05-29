@@ -27,8 +27,8 @@ class GAE:
       raise ValueError("trajectory cannot contain 'value_targets'")
 
     rewards = trajectory["rewards"]
-    resets = trajectory["resets"]
-    values = trajectory["values"]
+    resets = trajectory["resets"][:,0]
+    values = trajectory["values"][:,0,0]
 
     # Values might have an additional last dimension of size 1 as outputs of
     # dense layers. Need to adjust shapes of rewards and resets accordingly.

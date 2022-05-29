@@ -54,10 +54,14 @@ class LQR_rew():
     self.p = p
 
   def __call__(self, obs, rew, done, act, info):
-    r = np.ones_like(rew)* self.t
+    if done: 
+      return self.p
+
+    rew = self.t
+    if self.q is not None:
+      rew -= la.norm(self.q * obs)**2
+    if self.e is not None:
+      rew -= la.norm(self.e * act)**2
+
+    return rew 
     
-    r -= la.norm(self.q * obs,axis=1)**2
-    r -= la.norm(self.e * act,axis=1)**2
-    np.put(r,np.where(done==True),self.p)
-    
-    return r

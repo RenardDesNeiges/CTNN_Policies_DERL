@@ -33,7 +33,7 @@ class PPOLearner(Learner):
         "mujoco": {
             "num-train-steps": 1e6,
             "nenvs": dict(type=int, default=None),
-            "num-runner-steps": 2048,
+            "num-runner-steps": 128, #2048
             "gamma": 0.99,
             "lambda_": 0.95,
             "num-epochs": 10,

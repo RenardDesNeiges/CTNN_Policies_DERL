@@ -14,7 +14,7 @@ class LeakyComponent(tf.keras.layers.Layer):
   def build(self, input_shape):
     tau_init = tf.random_normal_initializer(mean=0.0, stddev=0.05)
     self.tau = tf.Variable(
-        initial_value=1-tau_init(shape=(input_shape[0], input_shape[1]),
+        initial_value=1-tau_init(shape=(1, input_shape[-1]),
                             dtype='float32'),
         trainable=True)
     self.mult = tf.keras.layers.Multiply()
@@ -34,7 +34,7 @@ class ConductanceConnectivity(tf.keras.layers.Layer):
   def build(self, input_shape):
     bias_init = tf.random_normal_initializer(mean=1.0, stddev=0.5)
     self.bias = tf.Variable(
-        initial_value=bias_init(shape=(input_shape[0], input_shape[1]),
+        initial_value=bias_init(shape=(1, input_shape[-1]),
                             dtype='float32'),
         trainable=True)
     self.add = tf.keras.layers.Add()
@@ -266,7 +266,7 @@ class LTC(ODEModel):
       non_linearity = self.mult([non_linearity,self.conductance(inputs)])
       return self.add([non_linearity,self.leakyComponent(inputs)])
 
-    latent_input = tf.concat([self.input_net(inputs),state],axis=1) \
+    latent_input = tf.concat([self.input_net(inputs),state],axis=-1) \
             if self.is_recurrent == True else self.input_net(inputs)
             
     latent_out = self.odeint(dynamics, latent_input, self.time)[-1]
