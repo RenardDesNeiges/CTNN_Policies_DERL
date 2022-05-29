@@ -1,0 +1,30 @@
+env_id: InvertedPendulum-v2
+logdir: /home/renard/Documents/experiments/R_InvertedPendulumLQReward_05061553/logdir/ltc/InvertedPendulumLQReward
+log_period: 1
+num_train_steps: 400000.0
+nenvs: None
+num_runner_steps: 2048
+gamma: 0.99
+lambda_: 0.95
+num_epochs: 10
+num_minibatches: 32
+cliprange: 0.2
+value_loss_coef: 0.25
+entropy_coef: 0.0
+max_grad_norm: 0.5
+lr: 0.0002
+optimizer_epsilon: 1e-05
+seed: 0
+hidden_units: 8
+num_input_layers: 1
+num_dynamics_layers: 1
+num_output_layers: 1
+policy_net: ltc
+value_net: ltc
+recurrent_policy: True
+recurrent_value: True
+tol: 0.001
+save_weights: True
+obs_preprocessors: 
+act_preprocessors: 
+reward_function: invPendulumEnergyPenalty
