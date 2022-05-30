@@ -64,6 +64,7 @@ class EnvRunner(BaseRunner):
       if not self.nenvs and np.all(done):
         self.state["env_steps"] = i + 1
         self.state["latest_observation"] = self.env.reset()
+        self.policy.reset()
         if self.policy.is_recurrent():
           self.state["policy_state"] = self.policy.get_state()
         if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
@@ -117,7 +118,6 @@ class TrajectorySampler(BaseRunner):
       self.trajectory[key] = val[indices]
 
   def get_next(self):
-    # TODO : support recurrent policies
     if self.trajectory is None or self.trajectory_is_stale():
       self.epoch_count = self.minibatch_count = 0
       self.trajectory = self.runner.get_next()
@@ -173,7 +173,6 @@ class EvalRunner(EnvRunner):
       self.env.render()
     
     rand = random.randint(0,20000)
-    print(rand)
     self.env.seed(random.randint(0,20000))
     if n_steps is None:
       n_steps = self.nsteps
@@ -215,12 +214,14 @@ class EvalRunner(EnvRunner):
         self.state["env_steps"] = i + 1
         self.env.seed(rand)
         self.state["latest_observation"] = self.env.reset()
+        self.policy.reset()
         if self.policy.is_recurrent():
           self.state["policy_state"] = self.policy.get_state()
         if self.cutoff or (self.cutoff is None and self.policy.is_recurrent()):
           break
 
     self.env.reset()
+    self.policy.reset()
     self.env.close()
 
     trajectory.update(observations=observations, 
