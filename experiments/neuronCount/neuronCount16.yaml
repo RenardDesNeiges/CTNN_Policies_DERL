@@ -1,0 +1,19 @@
+node: prod
+max_time: 10
+script: run-mujoco.py
+sbatch_name: run-cluster.sh
+parallelize: False
+jobname: neuronCount16
+run_args:
+  invPendulumEnergyPosition_ltc:
+    num-train-steps: 400000
+    lr: 2e-4
+    nenvs: 1
+    reward-function: invPendulumEnergyPenalty
+    hidden-units: 8
+    policy-net: ltc
+    value-net: ltc
+    recurrent-policy: True
+    recurrent-value: True
+    env-id: InvertedPendulum-v2
+    logdir: logdir/
